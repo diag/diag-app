@@ -1,5 +1,6 @@
 import { updateHeaders, headers, apiHost, parseJSON } from './apiutils';
 import { random as textRandom } from './textutils';
+import Spaces from '../app/spaces';
 // import fs from 'fs';
 // import path from 'path';
 
@@ -19,17 +20,12 @@ export function testSetup(testName, TID) {
   let appWait;
   if (!('SKIP_SERVER' in process.env)) {
     app = require('gdi-http/src/server');
-    appWait = new Promise(resolve => {
-      app.app.on('ready', () => {
-        console.log('api server ready ...');
-        resolve();
-      });
-    });
+    appWait = app.app.promise
+      .then(() => { console.log('api server ready ... shoot!') });
   } else {
     appWait = Promise.resolve();
   }
   const owner = `user@${TID}`;
-  // const spaceId = `space${TID}`;
   const options = { headers: headers() };
 
   console.log('Starting backend test, TID: ', TID);
@@ -70,6 +66,27 @@ export function testSetup(testName, TID) {
     });
 }
 
+export function testData() {
+  const TID = getTID();
+  return {
+    TID,
+    spaceId: `space${TID}`,
+    space2Id: `space2${TID}`,
+    space3Id: `space3${TID}`,
+    spaceName: `spacename${TID}`,
+    space2Name: `space2name${TID}`,
+    owner: `user@${TID}`,
+    spaces: new Spaces(),
+    d1orig: dataset1orig,
+    d2orig: dataset2orig,
+    f1orig: file1orig,
+    f2orig: file2orig,
+    f3orig: file3orig,
+    interimState: {},
+    initialState: {},
+  };
+}
+
 export function testTearDown() {
 // export function testTearDown(testName) {
   // if ('UPDATE_NOCK_CACHE' in process.env) {
@@ -100,6 +117,15 @@ export function testTearDown() {
       resolve();
     }
   });
+}
+
+export function catchErr(err) {
+  console.log(err);
+  if (typeof err.text === 'function') {
+    err.text().then(payload => console.log(payload));
+  } else {
+    console.log(err);
+  }
 }
 
 

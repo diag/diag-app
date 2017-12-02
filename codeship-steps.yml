@@ -1,0 +1,2 @@
+- service: diag-app
+  command: npm run test 

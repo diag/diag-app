@@ -1,0 +1,7 @@
+diag-app:
+  build:
+    image: diag-app
+    dockerfile: Dockerfile
+    encrypted_args_file: sshkey.args.encrypted
+  cached: true
+  encrypted_env_file: credentials.env.encrypted

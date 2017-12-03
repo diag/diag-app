@@ -5,7 +5,7 @@ import {
 } from '../actions';
 import { createReducer } from '../utils/reducer';
 import { handleError } from '../utils/uiutils';
-import { Spaces } from '../app/app';
+import { Spaces } from '../app';
 
 export const initialState = new Spaces();
 

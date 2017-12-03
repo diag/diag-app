@@ -2,7 +2,7 @@ import * as tu from '../../js/utils/testutils';
 import {
   getAllSpaces, getSpace, postSpace, postDataset, getDataset
 } from '../../js/api/datasets';
-import { Spaces, Space, Dataset, File, Activity, Annotation } from '../../js/app/app';
+import { Spaces, Space, Dataset, File, Activity, Annotation } from '../../js/app';
 import fetch from 'node-fetch';
 import { polyfill as promisePolyfill } from 'es6-promise';
 

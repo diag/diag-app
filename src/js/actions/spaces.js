@@ -3,7 +3,7 @@ import {
   FILE_LOAD, FILE_CREATE, ANNOTATION_CREATE, ANNOTATION_UPDATE, ANNOTATION_DELETE, ACTIVITY_CREATE, ANNOTATION_COMMENT_CREATE,
   ANNOTATION_COMMENT_UPDATE, ANNOTATION_COMMENT_DELETE,
 } from '../actions';
-import { Spaces, Space, Dataset, File, Annotation, Activity } from '../app/app';
+import { Spaces, Space, Dataset, File, Annotation, Activity } from '../app';
 import { promiseDispatch, promiseDispatchWithActivity, dispatchError } from '../utils/uiutils';
 
 /* eslint import/prefer-default-export: off */

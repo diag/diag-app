@@ -1,0 +1,299 @@
+import { getAllSpaces } from '../api/datasets';
+import Space from './space';
+import Dataset from './dataset';
+
+/** Top level class representing all spaces we have access to */
+export default class Spaces {
+  /**
+   * Creates Spaces from data returned from API
+   * @param {Space[]} spaces - Spaces we have access to
+   */
+  constructor(spaces) {
+    this._spaces = spaces === undefined ? {} : spaces;
+    this._currentSpaceId = undefined;
+    this._currentDatasetId = undefined;
+  }
+
+  /**
+   * Returns a copy of Spaces
+   * @returns {Spaces}
+   */
+  copy() {
+    const ret = new Spaces();
+    ret._currentSpaceId = this._currentSpaceId;
+    ret._currentDatasetId = this._currentDatasetId;
+    ret._spaces = { ...this._spaces };
+    return ret;
+  }
+
+  /**
+   * All spaces
+   * @returns {Space[]}
+   */
+  spaces() { return Object.values(this._spaces); }
+
+  /**
+   * Space to return
+   * @param {string} sid - Space to return
+   * @returns {Space}
+   * */
+  space(sid) { return this._spaces[sid] === undefined ? new Space() : this._spaces[sid]; }
+
+  /**
+   * Dataset to return
+   * @param {string} sid - Space ID
+   * @param {string} did - Dataset ID
+   * @returns {Dataset}
+   */
+  dataset(sid, did) { return this.space(sid).dataset(did); }
+
+  /**
+   * File to return
+   * @param {string} sid - Space ID
+   * @param {string} did - Dataset ID
+   * @param {string} fid - File ID
+   */
+  file(sid, did, fid) { return this.space(sid).dataset(did).file(fid); }
+
+  /**
+   * Spaces owned by a user
+   * @param {string} owner - Owner
+   * @returns {Space[]}
+   */
+  user(owner) { return (this.spaces().filter(s => s.owner === owner) || []); }
+
+  /**
+   * Returns current space
+   * @returns {Spaces}
+   */
+  currentSpace() { return this._currentSpaceId === undefined ? new Space() : this.space(this._currentSpaceId); }
+
+  /**
+   * Returns current dataset
+   * @returns {Dataset}
+   */
+  currentDataset() { return (this._currentSpaceId === undefined || this._currentDatasetId === undefined) ? new Dataset() : this.dataset(this._currentSpaceId, this._currentDatasetId); }
+
+  /**
+   * Returns current space ID
+   * @returns {string}
+   */
+  currentSpaceId() { return this._currentSpaceId; }
+
+  /**
+   * Returns current dataset ID
+   * @returns {string}
+   */
+  currentDatasetId() { return this._currentDatasetId; }
+
+  /**
+   * Load from API
+   * @param {Promise<Space>} spacesPromise - Promise which returns a list of spaces
+   * @returns {Promise<Spaces>}
+  */
+  static load(spacesPromise) {
+    if (!spacesPromise) {
+      spacesPromise = getAllSpaces();
+    }
+    return spacesPromise
+      .then((payload) => {
+        let ret = {};
+        if (payload.count > 0) {
+          ret = payload.items.map(s => new Space(s)).reduce((spaces, s) => { spaces[s.itemid()] = s; return spaces; }, {});
+        }
+        return new Promise((resolve) => { resolve(new Spaces(ret)); });
+      });
+  }
+
+  /**
+   * Inserts space into a copy of Spaces object
+   * @param {Space} space
+   * @returns {Spaces}
+   */
+  insert(space) {
+    const ret = this.copy();
+    ret._spaces = { ...this._spaces, [space.itemid()]: space };
+    return ret;
+  }
+
+  /**
+   * Replaces space in copy of Spaces object
+   * @param {Space} space
+   * @returns {Spaces}
+   */
+  update(space) {
+    const ret = this.copy();
+    ret._spaces = { ...this._spaces };
+    ret._spaces[space.itemid()] = space;
+    return ret;
+  }
+
+  /**
+   * Inserts a dataset into a copy of Spaces object
+   * @param {Dataset} dataset
+   * @returns {Spaces}
+   */
+  insertDataset(dataset) {
+    const spaceId = dataset.space().itemid();
+    const newSpace = this.space(spaceId).insertDataset(dataset);
+    return this.update(newSpace);
+  }
+
+  /**
+   * Inserts activity into a copy of the Spaces object
+   * @param {Activity} activity
+   * @returns {Spaces}
+   */
+  insertActivity(activity) {
+    const spaceId = activity.space().itemid();
+    const newSpace = this.space(spaceId).insertActivity(activity);
+    const dsId = activity.dataset().itemid();
+    if (dsId !== undefined) {
+      switch (activity.type) {
+      case 'annotation':
+        newSpace.dataset(dsId).annotation_count++;
+        break;
+      case 'upload':
+        newSpace.dataset(dsId).file_count++;
+        break;
+      case 'search':
+        newSpace.dataset(dsId).search_count++;
+        break;
+      default:
+        break;
+      }
+    }
+    return this.update(newSpace);
+  }
+
+  /**
+   * Inserts a file into a copy of the Spaces object
+   * @param {File} file
+   * @returns {Spaces}
+   */
+  insertFile(file) {
+    const spaceId = file.space().itemid();
+    const datasetId = file.dataset().itemid();
+    const newDataset = this.dataset(spaceId, datasetId).insertFile(file);
+    const newSpace = this.space(spaceId).updateDataset(newDataset);
+    return this.update(newSpace);
+  }
+
+  /**
+   * Inserts an annotation into a copy of the Spaces object
+   * @param {Annotation} annotation
+   * @returns {Spaces}
+   */
+  insertAnnotation(annotation) {
+    const spaceId = annotation.space().itemid();
+    const datasetId = annotation.dataset().itemid();
+    const newDataset = this.dataset(spaceId, datasetId).insertAnnotation(annotation);
+    const newSpace = this.space(spaceId).updateDataset(newDataset);
+    return this.update(newSpace);
+  }
+
+  /**
+   * Update an annotation into a copy of the Spaces object
+   * @param {Annotation} annotation
+   * @returns {Spaces}
+   */
+  updateAnnotation(annotation) {
+    const spaceId = annotation.space().itemid();
+    const datasetId = annotation.dataset().itemid();
+    const newDataset = this.dataset(spaceId, datasetId).updateAnnotation(annotation);
+    const newSpace = this.space(spaceId).updateDataset(newDataset);
+    return this.update(newSpace);
+  }
+
+  /**
+   * Deletes an annotation from a copy of the Spaces object
+   * @param {Annotation} annotation
+   * @returns {Spaces}
+   */
+  deleteAnnotation(annotation) {
+    const spaceId = annotation.space().itemid();
+    const datasetId = annotation.dataset().itemid();
+    const newDataset = this.dataset(spaceId, datasetId).deleteAnnotation(annotation);
+    const newSpace = this.space(spaceId).updateDataset(newDataset);
+    return this.update(newSpace);
+  }
+
+  /**
+   * Updates a dataset into a copy of the Spaces object
+   * @param {Dataset} dataset
+   * @returns {Spaces}
+   */
+  updateDataset(dataset) {
+    const spaceId = dataset.space().itemid();
+    const newSpace = this.space(spaceId).updateDataset(dataset);
+    return this.update(newSpace);
+  }
+
+  /**
+   * Updates a file into a copy of the Spaces object
+   * @param {File} file
+   * @returns {Spaces}
+   */
+  updateFile(file) {
+    const spaceId = file.space().itemid();
+    const datasetId = file.dataset().itemid();
+    const newDataset = this.dataset(spaceId, datasetId).updateFile(file);
+    const newSpace = this.space(spaceId).updateDataset(newDataset);
+    return this.update(newSpace);
+  }
+
+  /**
+   * Sets current space to space
+   * @param {(Space|number)} space - Can be space object or space ID
+   */
+  setCurrentSpace(space) {
+    let currentSpaceId;
+    if (space instanceof Space) {
+      currentSpaceId = space.space().itemid();
+    } else {
+      currentSpaceId = space;
+    }
+    if (this.space(currentSpaceId).itemid() === undefined) {
+      return Space.load(currentSpaceId)
+        .then((payload) => {
+          payload._currentSpaceId = currentSpaceId;
+          return Promise.resolve(payload);
+        });
+    }
+    const ret = this.copy();
+    ret._currentSpaceId = currentSpaceId;
+    ret._currentDatasetId = undefined;
+    return new Promise(resolve => resolve(ret));
+  }
+
+  /**
+   * Sets the current dataset to dataset
+   * @param {(Dataset|number)} dataset - Can be dataset object or dataset ID
+   */
+  setCurrentDataset(dataset) {
+    let currentDatasetId;
+    let currentSpaceId;
+    if (dataset instanceof Dataset) {
+      currentDatasetId = dataset.itemid();
+      currentSpaceId = dataset.space().itemid();
+    } else {
+      currentDatasetId = dataset;
+      currentSpaceId = this._currentSpaceId;
+    }
+    if (this.dataset(currentSpaceId, currentDatasetId).itemid() === undefined) {
+      if (this.space(currentSpaceId).itemid() === undefined) {
+        return Promise.reject(`invalid current space ${currentSpaceId}`);
+      }
+      return Dataset.load(this.space(currentSpaceId), currentDatasetId)
+        .then((payload) => {
+          payload._currentSpaceId = currentSpaceId;
+          payload._currentDatasetId = currentDatasetId;
+          return Promise.resolve(payload);
+        });
+    }
+    const ret = this.copy();
+    ret._currentSpaceId = currentSpaceId;
+    ret._currentDatasetId = currentDatasetId;
+    return new Promise(resolve => resolve(ret));
+  }
+}

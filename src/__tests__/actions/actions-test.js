@@ -1,6 +1,6 @@
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import { Space, Spaces, Dataset, File, Activity, Annotation } from '../../js/app/app';
+import { Space, Spaces, Dataset, File, Activity, Annotation } from '../../js/app';
 import {
   SPACES_INIT, SPACE_CREATE, SPACE_LOAD, SPACE_UPDATE, SPACE_SET, DATASET_LOAD, DATASET_CREATE, DATASET_SET, DATASET_UPDATE,
   FILE_LOAD, FILE_CREATE, ACTIVITY_CREATE, ANNOTATION_CREATE, ANNOTATION_UPDATE, ANNOTATION_DELETE, ANNOTATION_COMMENT_CREATE,

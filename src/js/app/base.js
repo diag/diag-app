@@ -1,9 +1,9 @@
 import { props } from '../utils/apputils';
 
 export default class Base {
-  constructor(parent) {
+  constructor(store) {
     // _store is a function which will return Spaces
-    this._store = (parent || {})._store;
+    this._store = store;
   }
 
   /**
@@ -18,15 +18,20 @@ export default class Base {
    */
   copy() {
     const ret = Object.create(this.constructor.prototype);
-    return Object.assign(ret, this);
+    Object.assign(ret, this);
+    return ret;
   }
 
   /**
    * Gets the name of the key we store ourselves in our parent
    * @returns {string}
    */
+  static getKey(klass) {
+    return `_${klass.name.toLowerCase()}`;
+  }
+
   _getKey() {
-    return `_${this.constructor.name.toLowerCase()}`;
+    return Base.getKey(this.constructor);
   }
 
   /**
@@ -35,6 +40,14 @@ export default class Base {
    */
   _getSelfs() {
     return this._store()[this._getKey()] || [];
+  }
+
+  /**
+   * Gets existing objects stored in the parent
+   * @returns {Array<object>}
+   */
+  static getSelfs(klass, store) {
+    return store[Base.getKey(klass)] || [];
   }
 
   /**
@@ -182,6 +195,18 @@ export default class Base {
   storeList(id) {
     const fFunc = Base._getFilterFunc(id);
     return this._getSelfs().filter(fFunc);
+  }
+
+  /**
+   *
+   * @param {object} klass - Class to retrieve store for
+   * @param {object} store - Parent datastore object
+   * @param {object} id - ID to filter by
+   */
+
+  static storeListByClass(klass, store, id) {
+    const fFunc = Base._getFilterFunc(id);
+    return Base.getSelfs(klass, store).filter(fFunc);
   }
 
   /**

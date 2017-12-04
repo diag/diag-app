@@ -1,5 +1,6 @@
 import { postSpaceActivity, postDatasetActivity, postFileActivity, getSpaceActivity } from '../api/activity';
 import { checkEmpty } from '../utils/apputils';
+import Spaces from './spaces';
 import Space from './space';
 import Dataset from './dataset';
 import File from './file';
@@ -13,11 +14,8 @@ export default class Activity extends Base {
    * @param {Object} activity - Activity object from API
    */
   constructor(parent, activity) {
-    super(parent);
+    super(Spaces.store);
     Object.assign(this, activity);
-    if (this._store && !('_activityList' in this._store())) {
-      this._store()._activityList = this.storeList.bind(this);
-    }
   }
 
   /**

@@ -2,6 +2,7 @@ import { getAllSpaces } from '../api/datasets';
 import { dispatchError } from '../utils/uiutils';
 import Space from './space';
 import Dataset from './dataset';
+import Activity from './activity';
 
 let _store;
 let _dispatch;
@@ -11,15 +12,9 @@ export default class Spaces {
   /**
    * Creates Spaces from data returned from API
    * @param {Space[]} spaces - Spaces we have access to
-   * @param {function} dispatch - Redux dispatch function
-   * @param {function} getStore - Redux getStore function
    */
-  constructor(spaces, dispatch, getStore) {
-    this._dispatch = dispatch;
-    this._getStore = getStore;
-    this._store = () => this._getStore().spaces;
+  constructor(spaces) {
     this._spaces = spaces === undefined ? {} : spaces;
-    Object.keys(this._spaces).forEach(key => this._spaces[key]._store = this._store);
     this._currentSpaceId = undefined;
     this._currentDatasetId = undefined;
   }
@@ -52,10 +47,6 @@ export default class Spaces {
     ret._currentSpaceId = this._currentSpaceId;
     ret._currentDatasetId = this._currentDatasetId;
     ret._spaces = { ...this._spaces };
-    ret._dispatch = this._dispatch;
-    ret._getStore = this._getStore;
-    ret._store = () => this._getStore().spaces;
-    Object.keys(ret._spaces).forEach(key => ret._spaces[key]._store = ret._store);
     return ret;
   }
 
@@ -119,7 +110,7 @@ export default class Spaces {
    */
   currentDatasetId() { return this._currentDatasetId; }
 
-  activity(id) { return this._activityList ? this._activityList(id) : []; }
+  activity(id) { return Activity.storeListByClass(Activity, this, id); }
 
   /**
    * Load from API
@@ -344,7 +335,7 @@ export default class Spaces {
     }
     return obj
       .then((action) => {
-        this._dispatch(action);
+        _dispatch(action);
         return Promise.resolve(action.payload);
       })
       .catch(error => {

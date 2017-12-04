@@ -11,11 +11,9 @@ export default class Space {
    * Create a space
    * @param {Object} space - Create new space with object from API
    */
-  constructor(space, store) {
-    this._store = store;
+  constructor(space) {
     Object.assign(this, space);
     this._datasets = {};
-    this._activity = [];
   }
 
   /**
@@ -24,7 +22,7 @@ export default class Space {
   */
   copy() {
     const ret = Object.assign({}, this, { _datasets: undefined, _activity: undefined });
-    return new Space(ret, this._store);
+    return new Space(ret);
   }
 
   /**
@@ -70,7 +68,7 @@ export default class Space {
    * All activity for this space
    * @returns {Activity[]}
    */
-  activity() { return this._store().activity(this.id); }
+  activity() { return Spaces.store().activity(this.id); }
 
   /**
    * Returns URL for this space

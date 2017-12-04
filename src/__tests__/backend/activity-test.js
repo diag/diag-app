@@ -12,8 +12,12 @@ let td;
 beforeAll(() => {
   td = tu.testData();
   return tu.testSetup('activity-test', td.TID)
+    .then(() => {
+      Spaces.init(() => { }, () => ({ spaces: td.spaces }));
+      return Promise.resolve();
+    })
     .then(() => (Space.create(td.spaceId, td.spaceName)))
-    .then(() => (Spaces.load(undefined, () => { }, () => ({ spaces: td.spaces }))))
+    .then(() => (Spaces.load()))
     .then((spaces) => {
       td.spaces = spaces;
       td.space = () => td.spaces.space(td.spaceId);
@@ -31,7 +35,7 @@ beforeAll(() => {
       td.file = () => td.spaces.file(td.spaceId, td.datasetId, td.fileId);
     });
 });
-afterAll(() => (tu.testTearDown('app-test')));
+afterAll(() => (tu.testTearDown('activity-test')));
 
 describe('App Activity', () => {
   it('Wont save without parent', () => {

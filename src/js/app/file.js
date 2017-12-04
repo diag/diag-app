@@ -2,6 +2,7 @@ import {
   getFileContent, uploadFile,
 } from '../api/datasets';
 import { props, isArchiveFile, gunzipIfNeeded } from '../utils/apputils';
+import Spaces from './spaces';
 import Dataset from './dataset';
 import { TextEncoder, TextDecoder } from 'text-encoding';
 
@@ -17,7 +18,6 @@ export default class File {
   constructor(parent, file) {
     Object.assign(this, file);
     this._parent = parent;
-    this._store = (parent || {})._store;
   }
 
   /**
@@ -48,7 +48,7 @@ export default class File {
    * Activity
    * @returns {Activity[]}
    */
-  activity() { return this._store().activity(this.id); }
+  activity() { return Spaces.store().activity(this.id); }
 
   /**
    * Annotations

@@ -12,12 +12,6 @@ let t5;
 let s;
 
 beforeAll(() => {
-  class Test extends Base {
-    constructor(parent, id) {
-      super(parent);
-      this.id = id;
-    }
-  }
   const space = new Space({ id: { item_id: 'foo' } });
   const dataset = new Dataset(space, { id: { item_id: '10', space_id: 'foo' } });
   const file = new File(dataset, { id: { item_id: '10', dataset_id: '10', space_id: 'foo' } });
@@ -28,11 +22,18 @@ beforeAll(() => {
   s = new Spaces({ [space.itemid()]: space });
   s._store = () => s;
 
-  t = new Test(s, { space_id: 'foo', dataset_id: '10', file_id: '10', item_id: '10' });
-  t2 = new Test(s, { space_id: 'foo', dataset_id: '10', file_id: '10', item_id: '11' });
-  t3 = new Test(s, { space_id: 'foo', dataset_id: '11', file_id: '11', item_id: '10' });
-  t4 = new Test(s, { space_id: 'foo2', dataset_id: '11', file_id: '11', item_id: '10' });
-  t5 = new Test(s, { space_id: 'foo2', dataset_id: '11', file_id: '11', item_id: '11' });
+  class Test extends Base {
+    constructor(id) {
+      super(s._store);
+      this.id = id;
+    }
+  }
+
+  t = new Test({ space_id: 'foo', dataset_id: '10', file_id: '10', item_id: '10' });
+  t2 = new Test({ space_id: 'foo', dataset_id: '10', file_id: '10', item_id: '11' });
+  t3 = new Test({ space_id: 'foo', dataset_id: '11', file_id: '11', item_id: '10' });
+  t4 = new Test({ space_id: 'foo2', dataset_id: '11', file_id: '11', item_id: '10' });
+  t5 = new Test({ space_id: 'foo2', dataset_id: '11', file_id: '11', item_id: '11' });
 });
 
 function updateStore(store) {
@@ -113,12 +114,13 @@ describe('Base properties', () => {
   it('should update itself in the store', () => {
     t.name = 'name';
     expect(t._store()[t._getKey()][0].name).toBe('name');
-    t.name = 'name2';
-    const newstore = t.storeUpdate();
+    const newt = t.copy();
+    newt.name = 'name2';
+    const newstore = newt.storeUpdate();
     expect(t._store()).not.toEqual(newstore);
     expect(t._store()[t._getKey()]).toHaveLength(2);
     expect(newstore[t._getKey()]).toHaveLength(2);
-    expect(newstore[t._getKey()][0]).toEqual(t);
+    expect(newstore[t._getKey()][0]).toEqual(newt);
     updateStore(newstore);
   });
 

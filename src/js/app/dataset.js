@@ -21,7 +21,6 @@ export default class Dataset {
     this._files = {};
     this._annotations = {};
     this._parent = parent;
-    this._store = (parent || {})._store;
   }
 
   /**
@@ -69,7 +68,7 @@ export default class Dataset {
    * Activity
    * @returns {Activity[]}
    */
-  activity() { return this._store().activity(this.id); }
+  activity() { return Spaces.store().activity(this.id); }
 
   /**
    * Annotations

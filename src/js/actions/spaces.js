@@ -13,7 +13,7 @@ import { promiseDispatch, promiseDispatchWithActivity, dispatchError } from '../
  * @param {errorAction} object - Action to dispatch upon completion
  */
 export function spacesLoad(errorAction) {
-  return promiseDispatch(() => (Spaces.load()),
+  return promiseDispatch((dispatch, getStore) => (Spaces.load(undefined, dispatch, getStore)),
     SPACES_INIT, undefined,
     dispatch => { if (errorAction) dispatch(errorAction); }
   );
@@ -24,8 +24,8 @@ export function spacesLoad(errorAction) {
  * @param {string} id
  * @param {string} name
  */
-export function spaceCreate(id, name) {
-  return promiseDispatch(() => (Space.create(id, name)), SPACE_CREATE);
+export function spaceCreate(id, name, spaces) {
+  return promiseDispatch(() => (Space.create(id, name, spaces)), SPACE_CREATE);
 }
 
 /**

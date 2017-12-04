@@ -21,6 +21,7 @@ export default class Dataset {
     this._files = {};
     this._annotations = {};
     this._parent = parent;
+    this._store = (parent || {})._store;
   }
 
   /**
@@ -68,7 +69,7 @@ export default class Dataset {
    * Activity
    * @returns {Activity[]}
    */
-  activity() { return this.space().activity().filter(a => a.id.dataset_id === this.itemid()); }
+  activity() { return this._store().activity(this.id); }
 
   /**
    * Annotations

@@ -1,10 +1,8 @@
 import {
   getSpace, getDatasets, postSpace, patchSpace,
 } from '../api/datasets';
-import { getSpaceActivity } from '../api/activity';
 import Spaces from './spaces';
 import Dataset from './dataset';
-import Activity from './activity';
 import { props, checkEmpty } from '../utils/apputils';
 
 /** Space containing datasets and activity */
@@ -13,7 +11,8 @@ export default class Space {
    * Create a space
    * @param {Object} space - Create new space with object from API
    */
-  constructor(space) {
+  constructor(space, store) {
+    this._store = store;
     Object.assign(this, space);
     this._datasets = {};
     this._activity = [];
@@ -25,7 +24,7 @@ export default class Space {
   */
   copy() {
     const ret = Object.assign({}, this, { _datasets: undefined, _activity: undefined });
-    return new Space(ret);
+    return new Space(ret, this._store);
   }
 
   /**
@@ -71,7 +70,7 @@ export default class Space {
    * All activity for this space
    * @returns {Activity[]}
    */
-  activity() { return this._activity; }
+  activity() { return this._store().activity(this.id); }
 
   /**
    * Returns URL for this space
@@ -107,13 +106,8 @@ export default class Space {
             payload.items.map(i => new Dataset(ret, i)).reduce((datasets, d) => { datasets[d.itemid()] = d; return datasets; }, {})
           ))
         )),
-      getSpaceActivity(this.itemid())
-        .then(payload => (
-          payload.items.map(i => new Activity(ret, i))
-        )),
     ]).then((promises) => {
       ret._datasets = promises[0];
-      ret._activity = promises[1];
       return new Promise((resolve) => { resolve(ret); });
     });
   }
@@ -131,16 +125,17 @@ export default class Space {
    * Saves space to the API
    * @param {string} id - Space ID to create
    * @param {string} name - Space name
+   * @param {function} store - Function which returns the store
    * @returns {Promise<Space>}
    */
-  static create(id, name) {
+  static create(id, name, store) {
     if (id === undefined) {
       return Promise.reject('id undefined');
     }
     return postSpace(id, name)
       .then((payload) => {
         if (payload.count > 0) {
-          return new Promise(resolve => resolve(new Space(payload.items[0])));
+          return Promise.resolve(new Space(payload.items[0], store));
         }
         return Promise.reject('Empty result set');
       });

@@ -1,4 +1,5 @@
 import { getAllSpaces } from '../api/datasets';
+import { dispatchError } from '../utils/uiutils';
 import Space from './space';
 import Dataset from './dataset';
 
@@ -7,9 +8,15 @@ export default class Spaces {
   /**
    * Creates Spaces from data returned from API
    * @param {Space[]} spaces - Spaces we have access to
+   * @param {function} dispatch - Redux dispatch function
+   * @param {function} getStore - Redux getStore function
    */
-  constructor(spaces) {
+  constructor(spaces, dispatch, getStore) {
+    this._dispatch = dispatch;
+    this._getStore = getStore;
+    this._store = () => this._getStore().spaces;
     this._spaces = spaces === undefined ? {} : spaces;
+    Object.keys(this._spaces).forEach(key => this._spaces[key]._store = this._store);
     this._currentSpaceId = undefined;
     this._currentDatasetId = undefined;
   }
@@ -23,6 +30,10 @@ export default class Spaces {
     ret._currentSpaceId = this._currentSpaceId;
     ret._currentDatasetId = this._currentDatasetId;
     ret._spaces = { ...this._spaces };
+    ret._dispatch = this._dispatch;
+    ret._getStore = this._getStore;
+    ret._store = () => this._getStore().spaces;
+    Object.keys(ret._spaces).forEach(key => ret._spaces[key]._store = ret._store);
     return ret;
   }
 
@@ -86,12 +97,16 @@ export default class Spaces {
    */
   currentDatasetId() { return this._currentDatasetId; }
 
+  activity(id) { return this._activityList ? this._activityList(id) : []; }
+
   /**
    * Load from API
    * @param {Promise<Space>} spacesPromise - Promise which returns a list of spaces
+   * @param {function} dispatch - Dispatch function for redux
+   * @param {function} getStore - Store function for redux
    * @returns {Promise<Spaces>}
   */
-  static load(spacesPromise) {
+  static load(spacesPromise, dispatch, getStore) {
     if (!spacesPromise) {
       spacesPromise = getAllSpaces();
     }
@@ -101,7 +116,7 @@ export default class Spaces {
         if (payload.count > 0) {
           ret = payload.items.map(s => new Space(s)).reduce((spaces, s) => { spaces[s.itemid()] = s; return spaces; }, {});
         }
-        return new Promise((resolve) => { resolve(new Spaces(ret)); });
+        return new Promise((resolve) => { resolve(new Spaces(ret, dispatch, getStore)); });
       });
   }
 
@@ -295,5 +310,53 @@ export default class Spaces {
     ret._currentSpaceId = currentSpaceId;
     ret._currentDatasetId = currentDatasetId;
     return new Promise(resolve => resolve(ret));
+  }
+
+  /**
+   * Dispatches a change to state
+   * @param {Promise<object>} obj - Object to dispatch
+   */
+  dispatch(obj) {
+    if (obj.action !== 'DIAG_CREATE' && obj.action !== 'DIAG_UPDATE' && obj.action !== 'DIAG_DELETE' && obj.action !== 'DIAG_LOAD') {
+      return Promise.reject('invalid action, must be one of DIAG_CREATE, DIAG_UPDATE, DIAG_DELETE, or DIAG_LOAD');
+    }
+    return obj
+      .then((action) => {
+        this._dispatch(action);
+        return Promise.resolve(action.payload);
+      })
+      .catch(error => {
+        return dispatchError(error, this._dispatch, obj.action);
+      });
+  }
+
+  /**
+   * Reduces state change from an action
+   * @param {object} state - Current state to modify
+   * @param {object} action - Action to execute to mutate state
+   * @returns {object} - Returns mutated state
+   */
+  static reduce(state, action) {
+    if (!action || !action.payload) return state;
+    const ret = Object.create(state.constructor.prototype);
+    if (action.error) {
+      Object.assign(ret, state, { error: action.error, status: action.status });
+      return ret;
+    }
+    switch (action.type) {
+    case 'DIAG_CREATE':
+      return Object.assign(ret, state, action.payload.storeInsert());
+    case 'DIAG_UPDATE':
+      return Object.assign(ret, state, action.payload.storeUpdate());
+    case 'DIAG_DELETE':
+      return Object.assign(ret, state, action.payload.storeDelete());
+    case 'DIAG_LOAD':
+      if (action.payload.length && action.payload.length === 0) {
+        return Object.assign(ret, state, { error: 'load called but payload not array' });
+      }
+      return Object.assign(ret, state, action.payload[0].storeLoad(action.payload));
+    default:
+      return Object.assign(ret, state, { error: 'invalid action' });
+    }
   }
 }

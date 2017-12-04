@@ -28,7 +28,7 @@ const mockStore = configureMockStore(middlewares);
 const TID = tu.getTID();
 const spaceId = `space${TID}`;
 
-const store = mockStore(initialState);
+const store = mockStore({ spaces: initialState });
 
 let spaceCreateAction;
 let spaceCreateErrorAction;
@@ -193,7 +193,7 @@ describe('Redux Datasets', () => {
     ));
 
     it('datasetUpdate updates a dataset', () => {
-      dataset.name = `${dataset.name}_updated`
+      dataset.name = `${dataset.name}_updated`;
       dataset.description = `${dataset.description}_updated`;
       dataset.problem = `${dataset.problem}_updated`;
       dataset.resolution = `${dataset.resolution}_updated`;
@@ -529,21 +529,15 @@ describe('Redux Datasets', () => {
     });
   });
 
-
-  //
-  // Current getStore() isn't supported by redux-mock-store so this fails, but should work in production code
-  // Commenting out tests for now
-  //
   // describe('Redux Spaces, current Space & Dataset', () => {
+  //   beforeEach(() => {
+  //     store.clearActions();
+  //   });
   //   describe('actions', () => {
   //     it('setCurrentSpace errors', () => {
   //       store.dispatch(setCurrentSpace('foo'))
-  //         .then(() => {
-  //           const actions = store.getActions();
-  //           expect(actions).toHaveLength(1);
-  //           expect(actions[0].type).toBe(SPACE_SET);
-  //           expect(actions[0].error).toBeTruthy();
-  //           setCurrentSpaceErrorAction = actions[0];
+  //         .catch((err) => {
+  //           expect(err.status).toBe(404);
   //         });
   //     });
   //     it('setCurrentSpace dispatches', () => {
@@ -558,20 +552,23 @@ describe('Redux Datasets', () => {
   //     });
 
   //     it('setCurrentDataset errors', () => {
-  //       store.dispatch(setCurrentDataset(dataset))
-  //       const actions = store.getActions();
-  //       expect(actions).toHaveLength(1);
-  //       expect(actions[0].type).toBe(DATASET_SET);
-  //       expect(actions[0].error).toBeTruthy();
-  //       setCurrentDatasetErrorAction = actions[0];
+  //       store.dispatch(setCurrentDataset('foo'))
+  //         .catch((err) => {
+  //           expect(err).toMatch('invalid current space');
+  //         });
   //     });
+
   //     it('setCurrentDataset dispatches', () => {
   //       store.dispatch(setCurrentDataset(dataset))
-  //       const actions = store.getActions();
-  //       expect(actions).toHaveLength(1);
-  //       expect(actions[0].type).toBe(DATASET_SET);
-  //       expect(actions[0].payload).toBe(dataset.itemid());
-  //       setCurrentDatasetAction = actions[0];
+  //         .then(() => {
+  //           expect(false).toBeTruthy();
+  //           const actions = store.getActions();
+  //           console.log(actions);
+  //           expect(actions).toHaveLength(2);
+  //           expect(actions[0].type).toBe(DATASET_SET);
+  //           expect(actions[0].payload).toBe(dataset.itemid());
+  //           setCurrentDatasetAction = actions[0];
+  //         });
   //     });
   //   });
 

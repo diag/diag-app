@@ -1,73 +1,24 @@
-import { postSpaceActivity, postDatasetActivity, postFileActivity } from '../api/activity';
-import { props, checkEmpty } from '../utils/apputils';
+import { postSpaceActivity, postDatasetActivity, postFileActivity, getSpaceActivity } from '../api/activity';
+import { checkEmpty } from '../utils/apputils';
 import Space from './space';
 import Dataset from './dataset';
 import File from './file';
+import Base from './base';
 
 /** User activity */
-export default class Activity {
+export default class Activity extends Base {
   /**
    * Create activity
    * @param {Space} parent - Parent
    * @param {Object} activity - Activity object from API
    */
   constructor(parent, activity) {
+    super(parent);
     Object.assign(this, activity);
-    this._parent = parent;
-  }
-
-  /**
-   * Shallow copy of this file
-   * @returns {File}
-  */
-  copy() { return new Activity(this._parent, this); }
-
-  /**
-   * Activity ID as a string
-   * @returns {string}
-  */
-  itemid() { return typeof this.id !== 'object' ? undefined : this.id.item_id; }
-
-  /**
-   * The parent Space
-   * @returns {Space}
-   */
-  space() { return this._parent.space(); }
-
-  /**
-   * The parent Dataset, if it exists for this activity. Can return undefined.
-   * @returns {Dataset}
-   */
-  dataset() {
-    if ('dataset_id' in this.id) {
-      return this._parent.dataset(this.id.dataset_id);
+    if (this._store && !('_activityList' in this._store())) {
+      this._store()._activityList = this.storeList.bind(this);
     }
-    return undefined;
   }
-
-  /**
-   * The parent file, if it exists for this activity. Can return undefined.
-   * @returns {File}
-   */
-  file() {
-    if ('file_id' in this.id && 'dataset_id' in this.id) {
-      return this.space().dataset(this.id.dataset_id).file(this.id.file_id);
-    }
-    return undefined;
-  }
-
-  // TODO DG-101 This should be able to link back to an annotation
-  // In the interim, we've leaked backend details into ActivityPanel.js
-  // which will need to be cleaned up.
-  static annotation() {
-    return undefined;
-  }
-
-  /**
-   * Returns non-private activity properties in a shallow object copy
-   * @returns {object}
-   */
-  props() { return props(this); }
 
   /**
    * Saves new activity to the API
@@ -110,6 +61,24 @@ export default class Activity {
         checkEmpty(payload, () => (
           new Promise(resolve => resolve(new Activity(parent, payload.items[0])))
         ))
+      ));
+  }
+
+  /**
+   * Loads activity from the api
+   * @param {Space} parent - Space to load activity for
+   * @returns Promise<Activity>
+   */
+  static load(space) {
+    if (space === undefined) {
+      return Promise.reject('space undefined');
+    }
+    if (!(space instanceof Space)) {
+      return Promise.reject('space is not a space object');
+    }
+    return getSpaceActivity(space.itemid())
+      .then(payload => (
+        payload.items.map(i => new Activity(space, i))
       ));
   }
 }

@@ -17,6 +17,7 @@ export default class File {
   constructor(parent, file) {
     Object.assign(this, file);
     this._parent = parent;
+    this._store = (parent || {})._store;
   }
 
   /**
@@ -47,7 +48,7 @@ export default class File {
    * Activity
    * @returns {Activity[]}
    */
-  activity() { return this.space().activity().filter(a => a.id.file_id === this.itemid()); }
+  activity() { return this._store().activity(this.id); }
 
   /**
    * Annotations

@@ -12,6 +12,7 @@ export default class Annotation {
   constructor(parent, annotation) {
     Object.assign(this, annotation);
     this._parent = parent;
+    this._store = (parent || {})._store;
   }
 
   /**

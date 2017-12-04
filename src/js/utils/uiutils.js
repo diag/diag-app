@@ -202,7 +202,7 @@ export function handleError(state, action, callback) {
   if (!action.error) {
     return { error: undefined, ...callback() };
   }
-  let ret = Object.create(state);
+  let ret = Object.create(state.constructor.prototype);
   ret = Object.assign(ret, state, { error: action.error, status: action.status });
   return ret;
 }

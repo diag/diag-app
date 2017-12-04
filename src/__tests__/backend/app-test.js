@@ -82,7 +82,7 @@ describe('App Spaces', () => {
     });
 
     it('should load spaces', () => (
-      Spaces.load()
+      Spaces.load(undefined, () => {}, () => ({ spaces }))
         .then((ss) => {
           spaces = ss;
           expect(spaces.spaces().length).toBeGreaterThan(0);
@@ -93,7 +93,6 @@ describe('App Spaces', () => {
     it('Can find our test space', () => {
       space = spaces.space(spaceId);
       const s = spaces.space(spaceId);
-      console.log(s);
       expect(s.space()).toBe(s);
       expect(s.itemid()).toBe(spaceId);
       expect(s.name).toBe(spaceName);
@@ -108,6 +107,7 @@ describe('App Spaces', () => {
           expect(newss.space(space2Id)).toBeTruthy();
           expect(spaces.space(space2Id).itemid()).not.toBeTruthy();
           space2 = s;
+          spaces = newss;
         })
     ));
   });
@@ -186,6 +186,7 @@ describe('App Datasets', () => {
       space.load()
         .then((payload) => {
           space = payload;
+          spaces = spaces.update(space);
           expect(space.datasets().length).toBe(1);
         })
     ));
@@ -197,6 +198,7 @@ describe('App Datasets', () => {
           expect(dataset2Id).toBeTruthy();
           expect(payload.space().itemid()).toBe(space.itemid());
           dataset2 = payload;
+          spaces = spaces.insertDataset(dataset2);
           done();
         });
     });
@@ -217,7 +219,7 @@ describe('App Datasets', () => {
     it('copy should be a copy', () => {
       const dcopy = dataset1.copy();
       expect(dcopy).not.toBe(dataset1);
-      expect(dcopy).toEqual(dataset1);
+      expect(dcopy.props()).toEqual(dataset1.props());
     });
 
     it('should return the right itemid', () => {
@@ -481,10 +483,23 @@ describe('App Activity', () => {
     setTimeout(done, 1000);
   });
 
-  it('Can be read back from space', () => (
-    space.load()
+  it('wont load if space undefined', () => {
+    expect(Activity.load()).rejects.toBeDefined();
+  });
+
+  it('wont load if not passed a space object', () => {
+    expect(Activity.load('foo')).rejects.toBeDefined();
+  });
+
+  it('Can be read back', () => (
+    Activity.load(space)
       .then((payload) => {
-        space = payload;
+        // Directly mutate state for tests
+        debugger;
+        spaces = Spaces.reduce(spaces, { type: 'DIAG_LOAD', payload });
+        // Since space has a closure which refers to the state
+        // we should be readable from everywhere
+        debugger;
         expect(space.activity().find(a => a.id.item_id === datasetact.itemid())).toBeTruthy();
       })
   ));
@@ -717,13 +732,13 @@ describe('App Annotations', () => {
       spaces = newSpaces;
     });
 
-    it('Can insert activity', () => {
-      const sid = datasetact2.space().itemid();
-      const newSpaces = spaces.insertActivity(datasetact2);
-      expect(newSpaces).not.toBe(spaces);
-      expect(newSpaces.space(sid).activity().find(a => a.itemid() === datasetact2.itemid())).toBeTruthy();
-      spaces = newSpaces;
-    });
+    // it('Can insert activity', () => {
+    //   const sid = datasetact2.space().itemid();
+    //   const newSpaces = Spaces.reduce(spaces, datasetact2.);
+    //   expect(newSpaces).not.toBe(spaces);
+    //   expect(newSpaces.space(sid).activity().find(a => a.itemid() === datasetact2.itemid())).toBeTruthy();
+    //   spaces = newSpaces;
+    // });
 
     it('Can insert a file', () => {
       const sid = file2.space().itemid();

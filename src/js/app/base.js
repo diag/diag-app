@@ -38,6 +38,14 @@ export default class Base {
   }
 
   /**
+   * Finds self index in the store
+   * @returns {integer}
+   */
+  _findSelfIndex() {
+    return this._getSelfs().findIndex(o => o.id === this.id);
+  }
+
+  /**
    * ID of the item as a string
    * @returns {string}
   */
@@ -96,7 +104,12 @@ export default class Base {
     const ret = this._store().copy();
     const key = this._getKey();
     const selfs = this._getSelfs();
-    ret[key] = [...selfs, this];
+    const itemIdx = this._findSelfIndex();
+    if (itemIdx === -1) {
+      ret[key] = [...selfs, this];
+    } else {
+      ret[key] = [...selfs];
+    }
     return ret;
   }
 
@@ -119,8 +132,12 @@ export default class Base {
     const insert = this.copy();
     const ret = this._store().copy();
     const selfs = this._getSelfs();
-    const itemIdx = selfs.findIndex(o => o.id === this.id);
-    ret[this._getKey()] = [...selfs.slice(0, itemIdx), insert, ...selfs.slice(itemIdx + 1)];
+    const itemIdx = this._findSelfIndex();
+    if (itemIdx > -1) {
+      ret[this._getKey()] = [...selfs.slice(0, itemIdx), insert, ...selfs.slice(itemIdx + 1)];
+    } else {
+      ret[this._getKey()] = [...selfs];
+    }
     return ret;
   }
 
@@ -132,8 +149,12 @@ export default class Base {
     const ret = this._store().copy();
     const key = this._getKey();
     const selfs = this._getSelfs();
-    const itemIdx = selfs.findIndex(o => o.id === this.id);
-    ret[key] = [...selfs.slice(0, itemIdx), ...selfs.slice(itemIdx + 1)];
+    const itemIdx = this._findSelfIndex();
+    if (itemIdx > -1) {
+      ret[key] = [...selfs.slice(0, itemIdx), ...selfs.slice(itemIdx + 1)];
+    } else {
+      ret[this._getKey()] = [...selfs];
+    }
     return ret;
   }
 
@@ -159,9 +180,8 @@ export default class Base {
    * @returns {object[]}
    */
   storeList(id) {
-    debugger;
     const fFunc = Base._getFilterFunc(id);
-    return this._store()[this._getKey()].filter(fFunc);
+    return this._getSelfs().filter(fFunc);
   }
 
   /**
@@ -171,6 +191,6 @@ export default class Base {
    */
   storeGet(id) {
     const fFunc = Base._getFilterFunc(id);
-    return this._store()[this._getKey()].find(fFunc);
+    return this._getSelfs().find(fFunc);
   }
 }

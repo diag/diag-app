@@ -8,6 +8,7 @@ let t;
 let t2;
 let t3;
 let t4;
+let t5;
 let s;
 
 beforeAll(() => {
@@ -31,10 +32,16 @@ beforeAll(() => {
   t2 = new Test(s, { space_id: 'foo', dataset_id: '10', file_id: '10', item_id: '11' });
   t3 = new Test(s, { space_id: 'foo', dataset_id: '11', file_id: '11', item_id: '10' });
   t4 = new Test(s, { space_id: 'foo2', dataset_id: '11', file_id: '11', item_id: '10' });
+  t5 = new Test(s, { space_id: 'foo2', dataset_id: '11', file_id: '11', item_id: '11' });
 });
 
 function updateStore(store) {
   s = store;
+}
+
+function compareSame(newstore) {
+  const selfs = t._getSelfs();
+  expect(selfs).toEqual(newstore[t._getKey()]);
 }
 
 describe('Base properties', () => {
@@ -89,6 +96,11 @@ describe('Base properties', () => {
   });
 
 
+  it('should wont insert itself twice', () => {
+    const newstore = t.storeInsert();
+    compareSame(newstore);
+  });
+
   it('should load a new list of objects', () => {
     const newstore = t.storeLoad([t, t2]);
     expect(t._store()).not.toEqual(newstore);
@@ -110,6 +122,11 @@ describe('Base properties', () => {
     updateStore(newstore);
   });
 
+  it('should not update something that does not exist', () => {
+    const newstore = t5.storeUpdate();
+    compareSame(newstore);
+  });
+
   it('should delete itself from the store', () => {
     const newstore = t.storeDelete();
     expect(t._store()).not.toEqual(newstore);
@@ -119,12 +136,18 @@ describe('Base properties', () => {
     updateStore(newstore);
   });
 
+  it('should not delete something that does not exist', () => {
+    const newstore = t5.storeDelete();
+    compareSame(newstore);
+  });
+
   it('should retrieve the right things with storeList', () => {
     updateStore(t.storeLoad([t, t2, t3, t4]));
     expect(t.storeList({ item_id: 'foo' })).toEqual([t, t2, t3]); // passed a space id
     expect(t.storeList({ space_id: 'foo', item_id: '10' })).toEqual([t, t2]);
     expect(t.storeList({ space_id: 'foo', dataset_id: '10', item_id: '10' })).toEqual([t, t2]);
     expect(t.storeList({ space_id: 'foo', dataset_id: '10', file_id: '10', item_id: '10' })).toEqual([t]);
+    expect(t.storeList({ space_id: 'foo3' })).toHaveLength(0);
   });
 
   it('should retrieve the right things with storeGet', () => {
@@ -133,6 +156,13 @@ describe('Base properties', () => {
     expect(t.storeGet({ space_id: 'foo', item_id: '11' })).toEqual(t3);
     expect(t.storeGet({ space_id: 'foo', dataset_id: '11', item_id: '11' })).toEqual(t3);
     expect(t.storeGet({ space_id: 'foo2', dataset_id: '11', file_id: '11', item_id: '10' })).toEqual(t4);
+    expect(t.storeGet({ space_id: 'foo3' })).toBeUndefined();
+  });
+
+  it('handles empty lists fine', () => {
+    updateStore(t.storeLoad([]));
+    expect(t.storeList({ item_id: 'foo2' })).toHaveLength(0);
+    expect(t.storeGet({ item_id: 'foo2' })).toBeUndefined();
   });
 });
 

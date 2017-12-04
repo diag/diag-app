@@ -45,7 +45,8 @@ export default class Activity extends Base {
     if (!('id' in data)) {
       return Promise.reject('data does not contain id object');
     }
-    if (!('item_id' in data.id)) {
+    if (!('item_id' in (data.id || {}))) {
+      console.log(data);
       return Promise.reject('data.id is not ID object');
     }
     let ret;

@@ -3,6 +3,9 @@ import { dispatchError } from '../utils/uiutils';
 import Space from './space';
 import Dataset from './dataset';
 
+let _store;
+let _dispatch;
+
 /** Top level class representing all spaces we have access to */
 export default class Spaces {
   /**
@@ -20,6 +23,25 @@ export default class Spaces {
     this._currentSpaceId = undefined;
     this._currentDatasetId = undefined;
   }
+
+  /**
+   * Initializes the API
+   * @param {function} dispatch - Redux dispatch function
+   * @param {function} getStore - Redux getStore function
+   */
+  static init(dispatch, getStore) {
+    _dispatch = dispatch;
+    _store = () => getStore().spaces;
+  }
+
+  /**
+   * Returns our current store
+   * @returns {object}
+   */
+  static store() {
+    return _store();
+  }
+
 
   /**
    * Returns a copy of Spaces

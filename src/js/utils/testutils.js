@@ -70,6 +70,22 @@ export function testSetup(testName, TID) {
     });
 }
 
+export function testData() {
+  const TID = getTID();
+  return {
+    TID,
+    spaceId: `space${TID}`,
+    spaceName: `spacename${TID}`,
+    owner: `user@${TID}`,
+    spaces: { },
+    d1orig: dataset1orig,
+    d2orig: dataset2orig,
+    f1orig: file1orig,
+    f2orig: file2orig,
+    f3orig: file3orig,
+  };
+}
+
 export function testTearDown() {
 // export function testTearDown(testName) {
   // if ('UPDATE_NOCK_CACHE' in process.env) {
@@ -100,6 +116,15 @@ export function testTearDown() {
       resolve();
     }
   });
+}
+
+export function catchErr(err) {
+  console.log(err);
+  if (typeof err.text === 'function') {
+    err.text().then(payload => console.log(payload));
+  } else {
+    console.log(err);
+  }
 }
 
 

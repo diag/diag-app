@@ -4,6 +4,7 @@ import fetch from 'node-fetch';
 import { polyfill as promisePolyfill } from 'es6-promise';
 
 global.fetch = fetch;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 15000;
 promisePolyfill();
 
 let td;

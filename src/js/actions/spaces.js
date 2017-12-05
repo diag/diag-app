@@ -1,8 +1,7 @@
 import {
   SPACES_INIT, SPACE_CREATE, SPACE_LOAD, SPACE_UPDATE, SPACE_SET, DATASET_LOAD, DATASET_CREATE, DATASET_UPDATE, DATASET_SET,
   FILE_LOAD, FILE_CREATE, ANNOTATION_CREATE, ANNOTATION_UPDATE, ANNOTATION_DELETE, ACTIVITY_CREATE, ANNOTATION_COMMENT_CREATE,
-  ANNOTATION_COMMENT_UPDATE, ANNOTATION_COMMENT_DELETE,
-  DIAG_CREATE, DIAG_LOAD, DIAG_UPDATE, DIAG_DELETE,
+  ANNOTATION_COMMENT_UPDATE, ANNOTATION_COMMENT_DELETE, DIAG_CREATE,
 } from '../actions';
 import { Spaces, Space, Dataset, File, Annotation, Activity } from '../app';
 import { promiseDispatch, promiseDispatchWithActivity, dispatchError } from '../utils/uiutils';
@@ -43,7 +42,7 @@ export function spaceUpdate(space) {
  */
 export function spaceLoad(space) {
   return promiseDispatch(() => (space.load()), SPACE_LOAD)
-    .then(() => Spaces.dispatch(DIAG_LOAD, Activity.load(space.itemid())));
+    .then(() => Spaces.dispatchLoad(Activity.load(space.itemid())));
 }
 
 /**
@@ -214,7 +213,7 @@ export function currentSpaceLoad() {
       .then((payload) => {
         dispatch({ type: SPACE_LOAD, payload });
       })
-      .then(() => Spaces.dispatch(DIAG_LOAD, Activity.load(getStore().spaces.currentSpace())))
+      .then(() => Spaces.dispatchLoad(Activity.load(getStore().spaces.currentSpace())))
       .catch((error) => {
         if (error !== 'Empty result set') {
           return dispatchError(error, dispatch, SPACE_LOAD);

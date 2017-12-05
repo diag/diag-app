@@ -326,8 +326,46 @@ export default class Spaces {
   }
 
   /**
+   * Dispatches a create change to state
+   * @param {Promise<object>} promise - Unresolved promise with a payload to dispatch
+   * @returns {Promise<object} - Returns promise payload as an unresolved promise
+   */
+  static dispatchCreate(promise) {
+    return Spaces.dispatch('DIAG_CREATE', promise);
+  }
+
+  /**
+   * Dispatches a load change to state
+   * @param {Promise<object>} promise - Unresolved promise with a payload to dispatch
+   * @returns {Promise<object} - Returns promise payload as an unresolved promise
+   */
+  static dispatchLoad(promise) {
+    return Spaces.dispatch('DIAG_LOAD', promise);
+  }
+
+  /**
+   * Dispatches a update change to state
+   * @param {Promise<object>} promise - Unresolved promise with a payload to dispatch
+   * @returns {Promise<object} - Returns promise payload as an unresolved promise
+   */
+  static dispatchUpdate(promise) {
+    return Spaces.dispatch('DIAG_UPDATE', promise);
+  }
+
+  /**
+   * Dispatches a delete change to state
+   * @param {Promise<object>} promise - Unresolved promise with a payload to dispatch
+   * @returns {Promise<object} - Returns promise payload as an unresolved promise
+   */
+  static dispatchDelete(promise) {
+    return Spaces.dispatch('DIAG_DELETE', promise);
+  }
+
+  /**
    * Dispatches a change to state
-   * @param {Promise<object>} obj - Object to dispatch
+   * @param {string} action - action to send to redux
+   * @param {Promise<object>} promise - Unresolved promise with a payload to dispatch
+   * @returns {Promise<object} - Returns promise payload as an unresolved promise
    */
   static dispatch(action, promise) {
     if (action !== 'DIAG_CREATE' && action !== 'DIAG_UPDATE' && action !== 'DIAG_DELETE' && action !== 'DIAG_LOAD') {

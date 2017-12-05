@@ -1,5 +1,4 @@
 import { getSpace } from '../api/datasets';
-import { DIAG_CREATE } from '../actions';
 import Spaces from '../app/spaces';
 import queryString from 'query-string';
 import ms from 'ms';
@@ -181,7 +180,7 @@ export function promiseDispatchWithActivity(promiseFunc, action, activityCallbac
       .catch((error) => (dispatchError(error, dispatch, action, errorCallback)))
       .then((payload) => {
         dispatch({ type: action, payload });
-        return Spaces.dispatch(DIAG_CREATE, activityCallback(payload));
+        return Spaces.dispatchCreate(activityCallback(payload));
       })
   );
 }

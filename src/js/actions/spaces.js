@@ -1,7 +1,7 @@
 import {
   SPACES_INIT, SPACE_CREATE, SPACE_LOAD, SPACE_UPDATE, SPACE_SET, DATASET_LOAD, DATASET_CREATE, DATASET_UPDATE, DATASET_SET,
   FILE_LOAD, FILE_CREATE, ANNOTATION_CREATE, ANNOTATION_UPDATE, ANNOTATION_DELETE, ACTIVITY_CREATE, ANNOTATION_COMMENT_CREATE,
-  ANNOTATION_COMMENT_UPDATE, ANNOTATION_COMMENT_DELETE, DIAG_CREATE,
+  ANNOTATION_COMMENT_UPDATE, ANNOTATION_COMMENT_DELETE, DIAG_CREATE, DIAG_UPDATE, DIAG_DELETE
 } from '../actions';
 import { Spaces, Space, Dataset, File, Annotation, Activity } from '../app';
 import { promiseDispatch, promiseDispatchWithActivity, dispatchError } from '../utils/uiutils';
@@ -42,7 +42,7 @@ export function spaceUpdate(space) {
  */
 export function spaceLoad(space) {
   return promiseDispatch(() => (space.load()), SPACE_LOAD)
-    .then(() => Spaces.dispatchLoad(Activity.load(space.itemid())));
+    .then(() => Spaces.dispatchLoad(Activity.load(space)));
 }
 
 /**
@@ -65,7 +65,8 @@ export function datasetCreate(space, name, description, tags, problem, resolutio
  * @param {Dataset} dataset
  */
 export function datasetLoad(dataset) {
-  return promiseDispatch(() => (dataset.load()), DATASET_LOAD);
+  return promiseDispatch(() => (dataset.load()), DATASET_LOAD)
+    .then(() => Spaces.dispatchLoad(Annotation.load(dataset)));
 }
 
 /**
@@ -123,7 +124,7 @@ export function fileLoad(file) {
  */
 export function annotationCreate(file, description, offset, length, data) {
   return promiseDispatchWithActivity(() => (Annotation.create(file, description, offset, length, data)),
-    ANNOTATION_CREATE, (payload) => (Activity.create(file, 'annotation', { id: payload.id, description: payload.description })));
+    DIAG_CREATE, (payload) => (Activity.create(file, 'annotation', { id: payload.id, description: payload.description })));
 }
 
 /**
@@ -132,7 +133,7 @@ export function annotationCreate(file, description, offset, length, data) {
  */
 export function annotationUpdate(annotation) {
   return promiseDispatchWithActivity(() => (annotation.update()),
-    ANNOTATION_UPDATE, (payload) => (Activity.create(payload.file(), 'annotation', { id: payload.id, description: payload.description })));
+    DIAG_UPDATE, (payload) => (Activity.create(payload.file(), 'annotation', { id: payload.id, description: payload.description })));
 }
 
 /**
@@ -142,7 +143,7 @@ export function annotationUpdate(annotation) {
  */
 export function annotationCommentCreate(annotation, text) {
   return promiseDispatchWithActivity(() => (annotation.createComment(text)),
-    ANNOTATION_COMMENT_CREATE, (payload) => (Activity.create(payload.file(), 'comment', { id: payload.id, description: text })));
+    DIAG_UPDATE, (payload) => (Activity.create(payload.file(), 'comment', { id: payload.id, description: text })));
 }
 
 /**
@@ -152,7 +153,7 @@ export function annotationCommentCreate(annotation, text) {
  * @param {string} text
  */
 export function annotationCommentUpdate(annotation, id, text) {
-  return promiseDispatch(() => (annotation.updateComment(id, text)), ANNOTATION_COMMENT_UPDATE);
+  return promiseDispatch(() => (annotation.updateComment(id, text)), DIAG_UPDATE);
 }
 
 /**
@@ -161,7 +162,7 @@ export function annotationCommentUpdate(annotation, id, text) {
  * @param {string} id
  */
 export function annotationCommentDelete(annotation, id) {
-  return promiseDispatch(() => (annotation.deleteComment(id)), ANNOTATION_COMMENT_DELETE);
+  return promiseDispatch(() => (annotation.deleteComment(id)), DIAG_UPDATE);
 }
 
 /**
@@ -169,7 +170,7 @@ export function annotationCommentDelete(annotation, id) {
  * @param {Annotation}
  */
 export function annotationDelete(annotation) {
-  return promiseDispatch(() => (annotation.delete()), ANNOTATION_DELETE);
+  return promiseDispatch(() => (annotation.delete()), DIAG_DELETE);
 }
 
 /**
@@ -227,5 +228,17 @@ export function currentSpaceLoad() {
  * Loads the current dataset from the API
  */
 export function currentDatasetLoad() {
-  return promiseDispatch((_, getStore) => (getStore().spaces.currentDataset().load()), DATASET_LOAD);
+  return (dispatch, getStore) => {
+    return getStore().spaces.currentDataset().load()
+      .then((payload) => {
+        console.log('got here!');
+        dispatch({ type: DATASET_LOAD, payload });
+      })
+      .then(() => Spaces.dispatchLoad(Annotation.load(getStore().spaces.currentDataset())))
+      .catch((error) => {
+        if (error !== 'Empty result set') {
+          return dispatchError(error, dispatch, DATASET_LOAD);
+        }
+      });
+  };
 }

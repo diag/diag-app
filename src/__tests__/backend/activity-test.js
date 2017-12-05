@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 import { polyfill as promisePolyfill } from 'es6-promise';
 
 // Redux
-import reducer, { initialState } from '../../js/reducers/spaces';
+import reducer from '../../js/reducers/spaces';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { DIAG_CREATE } from '../../js/actions';

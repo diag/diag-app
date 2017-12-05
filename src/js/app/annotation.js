@@ -1,56 +1,22 @@
-import { postAnnotation, patchAnnotation, deleteAnnotation, postAnnotationComment, patchAnnotationComment, deleteAnnotationComment } from '../api/annotations';
-import { props, checkEmpty, simpleObjectReturn } from '../utils/apputils';
+import { postAnnotation, patchAnnotation, deleteAnnotation, postAnnotationComment, patchAnnotationComment,
+  deleteAnnotationComment, getAllAnnotations } from '../api/annotations';
+import { checkEmpty, simpleObjectReturn } from '../utils/apputils';
+import Spaces from './spaces';
+import Dataset from './dataset';
 import File from './file';
+import Base from './base';
 
 /** Annotations on files */
-export default class Annotation {
+export default class Annotation extends Base {
   /**
    * Creates a annotation
    * @param {File} parent - File object pointing to parent
    * @param {Object} annotation - Annotation object returned from API
    */
   constructor(parent, annotation) {
+    super(Spaces.store);
     Object.assign(this, annotation);
-    this._parent = parent;
   }
-
-  /**
-   * Shallow copy of this annotation
-   * @returns {Annotation}
-  */
-  copy() { return new Annotation(this._parent, this); }
-
-  /**
-   * Annotation ID as a string
-   * @returns {string}
-  */
-  itemid() { return typeof this.id !== 'object' ? undefined : this.id.item_id; }
-
-  /**
-   * The parent Space
-   * @returns {Space}
-   */
-  space() { return this.dataset().space(); }
-
-  /**
-   * The parent Dataset
-   * @returns {Dataset}
-   */
-  dataset() { return this.file().dataset(); }
-
-  /**
-   * The parent File
-   * @returns {File}
-   */
-  file() { return this._parent; }
-
-  /**
-   * Returns non-private annotation properties in a shallow object copy
-   * @returns {object}
-   */
-  props() { return props(this); }
-
-  // No load as we'll do loading from the dataset
 
   /**
    * Saves a Annotation to the API
@@ -80,6 +46,31 @@ export default class Annotation {
       .then(payload => (
         checkEmpty(payload, () => new Promise(resolve => resolve(new Annotation(file, payload.items[0]))))
       ));
+  }
+
+  /**
+   * Loads annotations from the API
+   * @param {Dataset} dataset - Dataset to fetch annotations for
+   * @returns {Promise<Annotation>}
+   */
+  static load(dataset) {
+    if (dataset === undefined) {
+      return Promise.reject('dataset undefined');
+    }
+    if (!(dataset instanceof Dataset)) {
+      return Promise.reject('dataset is not an instance of Dataset');
+    }
+    return getAllAnnotations(dataset.space().itemid(), dataset.itemid())
+      .then(payload => {
+        return payload.items.map(a => {
+          const f = dataset.file(a.id.file_id);
+          if (f === undefined) {
+            console.warn(`File id ${a.id.file_id} not in dataset id ${dataset.itemid()}`);
+            return undefined;
+          }
+          return new Annotation(f, a);
+        }).filter(a => a !== undefined);
+      });
   }
 
   /**

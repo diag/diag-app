@@ -54,7 +54,7 @@ export default class File {
    * Annotations
    * @returns {Annotations[]}
    */
-  annotations() { return (this.dataset().annotations(this.itemid()) || []); }
+  annotations() { return Spaces.store().annotations(this.id); }
 
   /**
    * Content of the file after being decoded

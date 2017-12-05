@@ -1,4 +1,5 @@
 import { props } from '../utils/apputils';
+import isEqual from 'lodash/fp/isEqual';
 
 export default class Base {
   constructor(store) {
@@ -55,7 +56,7 @@ export default class Base {
    * @returns {integer}
    */
   _findSelfIndex() {
-    return this._getSelfs().findIndex(o => o.id === this.id);
+    return this._getSelfs().findIndex(o => isEqual(o.id, this.id));
   }
 
   /**

@@ -3,6 +3,7 @@ import { dispatchError } from '../utils/uiutils';
 import Space from './space';
 import Dataset from './dataset';
 import Activity from './activity';
+import Annotation from './annotation';
 
 let _store;
 let _dispatch;
@@ -110,7 +111,17 @@ export default class Spaces {
    */
   currentDatasetId() { return this._currentDatasetId; }
 
+  /**
+   * Returns activity for id
+   * @param {object} id - ID object to filter on
+   */
   activity(id) { return Activity.storeListByClass(Activity, this, id); }
+
+  /**
+   * Returns annotations for id
+   * @param {object} id - ID object to filter on
+   */
+  annotations(id) { return Annotation.storeListByClass(Annotation, this, id); }
 
   /**
    * Load from API
@@ -407,8 +418,8 @@ export default class Spaces {
     case 'DIAG_DELETE':
       return Object.assign(ret, state, action.payload.storeDelete());
     case 'DIAG_LOAD':
-      if (action.payload.length && action.payload.length === 0) {
-        return Object.assign(ret, state, { error: 'load called but payload not array' });
+      if (Array.isArray(action.payload) && action.payload.length === 0) {
+        return state;
       }
       return Object.assign(ret, state, action.payload[0].storeLoad(action.payload));
     default:

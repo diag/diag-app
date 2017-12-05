@@ -75,7 +75,15 @@ export default class Dataset {
    * @param {string} [fid] - File ID (optional)
    * @returns {Annotations[]}
    */
-  annotations(fid) { return fid === undefined ? Object.values(this._annotations).reduce((a, b) => a.concat(b), []) : this._annotations[fid]; }
+  annotations(fid) {
+    let id;
+    if (fid) {
+      id = { space_id: this.space().itemid(), dataset_id: this.dataset().itemid(), item_id: fid };
+    } else {
+      id = this.id;
+    }
+    return Spaces.store().annotations(id);
+  }
 
   /**
    * Returns URL for this file
@@ -252,85 +260,64 @@ export default class Dataset {
    */
   load() {
     const ret = this.copy();
-    return Promise.all([
-      getFiles(this.space().itemid(), this.itemid())
-        .then(payload => (
-          payload.items.map(f => new File(ret, f)).reduce((files, f) => {
-            // see if we can reuse the content from the current file
-            // TODO: consider potential cache size bloat
-            const cf = this.file(f.itemid());
-            if (cf) {
-              f.setRawContent(cf.rawContent());
-            }
-            files[f.itemid()] = f;
-            return files;
-          }, {})
-        )),
-      getAllAnnotations(this.space().itemid(), this.itemid())
-        .then(payload => (
-          payload.items
-        )),
-    ]).then((promises) => {
-      ret._files = promises[0];
-      ret._annotations = promises[1];
-    }).then(() => {
-      // download and index files in the DS
-      // TODO; move this to a bg task
-      const startTime = Date.now();
-      console.log(`${startTime} - download & index start`);
-      const downloads = [];
-      ret._initIndex();
+    return getFiles(this.space().itemid(), this.itemid())
+      .then(payload => (
+        payload.items.map(f => new File(ret, f)).reduce((files, f) => {
+          // see if we can reuse the content from the current file
+          // TODO: consider potential cache size bloat
+          const cf = this.file(f.itemid());
+          if (cf) {
+            f.setRawContent(cf.rawContent());
+          }
+          files[f.itemid()] = f;
+          return files;
+        }, {})
+      ))
+      .then((files) => {
+        ret._files = files;
+      })
+      .then(() => {
+        // download and index files in the DS
+        // TODO; move this to a bg task
+        const startTime = Date.now();
+        console.log(`${startTime} - download & index start`);
+        const downloads = [];
+        ret._initIndex();
 
-      const filesToAdd = [];
-      const filesToRemove = [];
-      ret.files().forEach((f) => {
-        downloads.push(
-          f.load()
-            .then((newf) => {
-              console.log(`${Date.now()} - downloaded file=${f.name}`);
-              f.setRawContent(newf.rawContent()); // copy content from newF
-              return this._expandArchive(newf, filesToAdd, filesToRemove);
-            }).catch((err) => {
-              console.error(`Failed to load contents of dataset=${ret.name}, file=${f.name}, err=${err}`);
-            })
-        );
-      });
+        const filesToAdd = [];
+        const filesToRemove = [];
+        ret.files().forEach((f) => {
+          downloads.push(
+            f.load()
+              .then((newf) => {
+                console.log(`${Date.now()} - downloaded file=${f.name}`);
+                f.setRawContent(newf.rawContent()); // copy content from newF
+                return this._expandArchive(newf, filesToAdd, filesToRemove);
+              }).catch((err) => {
+                console.error(`Failed to load contents of dataset=${ret.name}, file=${f.name}, err=${err}`);
+              })
+          );
+        });
+        return Promise.all(downloads)
+          .then(() => {
+            // remove/add files
+            ret._updateFiles(filesToAdd, filesToRemove);
 
-      return Promise.all(downloads)
-        .then(() => {
-          // remove/add files
-          ret._updateFiles(filesToAdd, filesToRemove);
-
-          // resolve annotations
-          ret._annotations = ret._annotations.map((a) => {
-            const f = ret.file(a.id.file_id);
-            if (f === undefined) {
-              console.warn(`File id ${a.id.file_id} not in dataset id ${ret.itemid()}`);
-              return undefined;
-            }
-            return new Annotation(f, a);
+            // index the files
+            ret.resetIndex(); // reset index in case we're reloading
+            ret.files().forEach((f) => {
+              ret.addFileToIndex(f);
+            });
           })
-            .filter(a => a !== undefined)
-            .reduce((annotations, a) => {
-              const fa = annotations[a.file().itemid()];
-              annotations[a.file().itemid()] = pushTo(fa, a);
-              return annotations;
-            }, {});
-
-          // index the files
-          ret.resetIndex(); // reset index in case we're reloading
-          ret.files().forEach((f) => {
-            ret.addFileToIndex(f);
-          });
-        })
-        .then(() => {
-          const endTime = Date.now();
-          console.log(`${endTime} - download & index done in ${endTime - startTime} ms`);
-        })
-        .then(() => (Promise.resolve(ret)));
-    }).catch((err) => {
-      console.log(err);
-    });
+          .then(() => {
+            const endTime = Date.now();
+            console.log(`${endTime} - download & index done in ${endTime - startTime} ms`);
+          })
+          .then(() => (Promise.resolve(ret)));
+      })
+      .catch((err) => {
+        console.log(err);
+      });
     // return getFiles(this.space().itemid(), this.itemid())
     //   .then(payload => (
     //     checkEmpty(payload, () => {

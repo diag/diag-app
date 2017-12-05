@@ -1,5 +1,6 @@
 import { getSpace } from '../api/datasets';
-import { ACTIVITY_CREATE } from '../actions';
+import { DIAG_CREATE } from '../actions';
+import Spaces from '../app/spaces';
 import queryString from 'query-string';
 import ms from 'ms';
 
@@ -175,20 +176,12 @@ export function promiseDispatch(promiseFunc, action, successCallback, errorCallb
  * @returns Promise<object>
  */
 export function promiseDispatchWithActivity(promiseFunc, action, activityCallback, successCallback, errorCallback) {
-  const activityAction = ACTIVITY_CREATE;
   return (dispatch, getStore) => (
     promiseFunc(dispatch, getStore)
       .catch((error) => (dispatchError(error, dispatch, action, errorCallback)))
       .then((payload) => {
         dispatch({ type: action, payload });
-        return activityCallback(payload)
-          .then((a) => {
-            dispatch({ type: activityAction, payload: a });
-            return Promise.resolve(payload);
-          })
-          .catch((error) => {
-            return dispatchError(error, dispatch, activityAction, errorCallback);
-          });
+        return Spaces.dispatch(DIAG_CREATE, activityCallback(payload));
       })
   );
 }

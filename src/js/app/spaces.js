@@ -329,17 +329,17 @@ export default class Spaces {
    * Dispatches a change to state
    * @param {Promise<object>} obj - Object to dispatch
    */
-  dispatch(obj) {
-    if (obj.action !== 'DIAG_CREATE' && obj.action !== 'DIAG_UPDATE' && obj.action !== 'DIAG_DELETE' && obj.action !== 'DIAG_LOAD') {
+  static dispatch(action, promise) {
+    if (action !== 'DIAG_CREATE' && action !== 'DIAG_UPDATE' && action !== 'DIAG_DELETE' && action !== 'DIAG_LOAD') {
       return Promise.reject('invalid action, must be one of DIAG_CREATE, DIAG_UPDATE, DIAG_DELETE, or DIAG_LOAD');
     }
-    return obj
-      .then((action) => {
-        _dispatch(action);
+    return promise
+      .then((payload) => {
+        _dispatch({ type: action, payload });
         return Promise.resolve(action.payload);
       })
       .catch(error => {
-        return dispatchError(error, this._dispatch, obj.action);
+        return dispatchError(error, this._dispatch, action);
       });
   }
 

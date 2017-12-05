@@ -2,6 +2,7 @@ import {
   SPACES_INIT, SPACE_CREATE, SPACE_UPDATE, SPACE_LOAD, SPACE_SET, DATASET_CREATE, DATASET_LOAD, DATASET_UPDATE, DATASET_SET,
   FILE_CREATE, FILE_LOAD, ANNOTATION_CREATE, ANNOTATION_UPDATE, ANNOTATION_DELETE, ACTIVITY_CREATE, ANNOTATION_COMMENT_CREATE,
   ANNOTATION_COMMENT_UPDATE, ANNOTATION_COMMENT_DELETE,
+  DIAG_CREATE, DIAG_LOAD, DIAG_UPDATE, DIAG_DELETE,
 } from '../actions';
 import { createReducer } from '../utils/reducer';
 import { handleError } from '../utils/uiutils';
@@ -99,6 +100,18 @@ const handlers = {
     handleError(state, action, () => (
       state.insertActivity(action.payload)
     ))
+  ),
+  [DIAG_CREATE]: (state, action) => (
+    Spaces.reduce(state, action)
+  ),
+  [DIAG_LOAD]: (state, action) => (
+    Spaces.reduce(state, action)
+  ),
+  [DIAG_UPDATE]: (state, action) => (
+    Spaces.reduce(state, action)
+  ),
+  [DIAG_DELETE]: (state, action) => (
+    Spaces.reduce(state, action)
   ),
 };
 

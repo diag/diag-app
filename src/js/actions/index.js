@@ -36,3 +36,9 @@ export const SPACE_CREATE = 'SPACE_CREATE';
 export const SPACE_UPDATE = 'SPACE_UPDATE';
 export const SPACE_INSERT = 'SPACE_INSERT';
 export const SPACE_SET = 'SPACE_SET';
+
+// Diag
+export const DIAG_CREATE = 'DIAG_CREATE';
+export const DIAG_LOAD = 'DIAG_LOAD';
+export const DIAG_UPDATE = 'DIAG_UPDATE';
+export const DIAG_DELETE = 'DIAG_DELETE';

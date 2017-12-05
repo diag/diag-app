@@ -3,6 +3,12 @@ import { Spaces, Space, Dataset, File, Activity } from '../../js/app';
 import fetch from 'node-fetch';
 import { polyfill as promisePolyfill } from 'es6-promise';
 
+// Redux
+import reducer, { initialState } from '../../js/reducers/spaces';
+import configureMockStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
+import { DIAG_CREATE } from '../../js/actions';
+
 global.fetch = fetch;
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 15000;
 promisePolyfill();
@@ -13,7 +19,12 @@ beforeAll(() => {
   td = tu.testData();
   return tu.testSetup('activity-test', td.TID)
     .then(() => {
-      Spaces.init(() => { }, () => ({ spaces: td.spaces }));
+      const middlewares = [thunk];
+      const mockStore = configureMockStore(middlewares);
+      td.store = mockStore({ spaces: td.spaces });
+    })
+    .then(() => {
+      Spaces.init(td.store.dispatch, () => ({ spaces: td.spaces }));
       return Promise.resolve();
     })
     .then(() => (Space.create(td.spaceId, td.spaceName)))
@@ -142,4 +153,55 @@ describe('App Activity', () => {
   //     space2 = news2;
   //   });
   // });
+});
+
+describe('Redux Activity', () => {
+  beforeEach(() => {
+    td.store.clearActions();
+  });
+
+  describe('actions', () => {
+    it('activityCreate errors', () => {
+      const type = '0'.repeat(50);
+      return Spaces.dispatchCreate(Activity.create(td.file(), type, { name: td.file().name, id: td.file().id }))
+        .catch(() => {
+        })
+        .then(() => {
+          const actions = td.store.getActions();
+          expect(actions).toHaveLength(1);
+          expect(actions[0].type).toBe(DIAG_CREATE);
+          expect(actions[0].error).toBeTruthy();
+          expect(actions[0].status).toBe(400);
+          td.activityCreateErrorAction = actions[0];
+        });
+    });
+
+
+    it('activityCreate inserts new activity', () => (
+      Spaces.dispatchCreate(Activity.create(td.file(), 'upload', { name: td.file().name, id: td.file().id }))
+        .then(() => {
+          const actions = td.store.getActions();
+          expect(actions).toHaveLength(1);
+          expect(actions[0].type).toBe(DIAG_CREATE);
+          expect(actions[0].payload).toBeInstanceOf(Activity);
+          expect(actions[0].payload.type).toBe('upload');
+          td.activityCreateAction = actions[0];
+          td.activity = td.activityCreateAction.payload;
+        })
+    ));
+
+    it('should handle the activityCreate error', () => {
+      expect(reducer(td.interimState, td.activityCreateErrorAction))
+        .toEqual({
+          error: td.activityCreateErrorAction.error,
+          status: td.activityCreateErrorAction.status,
+          ...td.interimState,
+        });
+    });
+
+    it('should handle activityCreate', () => {
+      expect(reducer(td.interimState, td.activityCreateAction))
+        .toEqual(Spaces.reduce(td.interimState, td.activityCreateAction));
+    });
+  });
 });

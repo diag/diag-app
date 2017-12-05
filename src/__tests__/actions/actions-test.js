@@ -327,22 +327,7 @@ describe('Redux Datasets', () => {
       store.clearActions();
     });
 
-    describe('actions', () => {
-      it('activityCreate errors', () => {
-        const type = '0'.repeat(50);
-        return store.dispatch(activityCreate(dataset, type, { name: file.name, id: file.id }))
-          .catch(() => {
-          })
-          .then(() => {
-            const actions = store.getActions();
-            expect(actions).toHaveLength(1);
-            expect(actions[0].type).toBe(ACTIVITY_CREATE);
-            expect(actions[0].error).toBeTruthy();
-            expect(actions[0].status).toBe(400);
-            activityCreateErrorAction = actions[0];
-          });
-      });
-
+    describe('annotations', () => {
       it('annotationCreate errors', () => (
         store.dispatch(annotationCreate(file, 'foo', -1, -1, 'foo'))
           .catch(() => {
@@ -354,19 +339,6 @@ describe('Redux Datasets', () => {
             expect(actions[0].error).toBeTruthy();
             expect(actions[0].status).toBe(400);
             annotationCreateErrorAction = actions[0];
-          })
-      ));
-
-      it('activityCreate inserts new activity', () => (
-        store.dispatch(activityCreate(dataset, 'upload', { name: file.name, id: file.id }))
-          .then(() => {
-            const actions = store.getActions();
-            expect(actions).toHaveLength(1);
-            expect(actions[0].type).toBe(ACTIVITY_CREATE);
-            expect(actions[0].payload).toBeInstanceOf(Activity);
-            expect(actions[0].payload.type).toBe('upload');
-            activityCreateAction = actions[0];
-            activity = activityCreateAction.payload;
           })
       ));
 
@@ -468,15 +440,6 @@ describe('Redux Datasets', () => {
     });
 
     describe('reducer', () => {
-      it('should handle the activityCreate error', () => {
-        expect(reducer(interimState, activityCreateErrorAction))
-          .toEqual({
-            error: activityCreateErrorAction.error,
-            status: activityCreateErrorAction.status,
-            ...interimState,
-          });
-      });
-
       it('should handle the annotationCreate error', () => {
         expect(reducer(interimState, annotationCreateErrorAction))
           .toEqual({
@@ -484,11 +447,6 @@ describe('Redux Datasets', () => {
             status: annotationCreateErrorAction.status,
             ...interimState,
           });
-      });
-
-      it('should handle activityCreate', () => {
-        expect(reducer(interimState, activityCreateAction))
-          .toEqual(interimState.insertActivity(activityCreateAction.payload));
       });
 
       it('should handle annotationCreate', () => {

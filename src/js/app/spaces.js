@@ -377,7 +377,7 @@ export default class Spaces {
         return Promise.resolve(action.payload);
       })
       .catch(error => {
-        return dispatchError(error, this._dispatch, action);
+        return dispatchError(error, _dispatch, action);
       });
   }
 
@@ -388,8 +388,13 @@ export default class Spaces {
    * @returns {object} - Returns mutated state
    */
   static reduce(state, action) {
-    if (!action || !action.payload) return state;
-    const ret = Object.create(state.constructor.prototype);
+    if (!action || !(action.payload || action.error)) return state;
+    let ret;
+    if (state.constuctor) {
+      ret = Object.create(state.constructor.prototype);
+    } else {
+      ret = Object.create(state);
+    }
     if (action.error) {
       Object.assign(ret, state, { error: action.error, status: action.status });
       return ret;

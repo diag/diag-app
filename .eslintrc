@@ -20,7 +20,8 @@
     "TextEncoder": false,
     "mixpanel": false,
     "atob": false,
-    "btoa": false
+    "btoa": false,
+    "jasmine": false
   },
   "rules": {
     "react/jsx-filename-extension": 0,

@@ -1,5 +1,6 @@
 import { updateHeaders, headers, apiHost, parseJSON } from './apiutils';
 import { random as textRandom } from './textutils';
+import Spaces from '../app/spaces';
 // import fs from 'fs';
 // import path from 'path';
 
@@ -77,12 +78,13 @@ export function testData() {
     spaceId: `space${TID}`,
     spaceName: `spacename${TID}`,
     owner: `user@${TID}`,
-    spaces: { },
+    spaces: new Spaces(),
     d1orig: dataset1orig,
     d2orig: dataset2orig,
     f1orig: file1orig,
     f2orig: file2orig,
     f3orig: file3orig,
+    interimState: {},
   };
 }
 

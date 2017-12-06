@@ -1,7 +1,6 @@
 import {
-  SPACES_INIT, SPACE_CREATE, SPACE_LOAD, SPACE_UPDATE, SPACE_SET, DATASET_LOAD, DATASET_CREATE, DATASET_UPDATE, DATASET_SET,
-  FILE_LOAD, FILE_CREATE, ANNOTATION_CREATE, ANNOTATION_UPDATE, ANNOTATION_DELETE, ACTIVITY_CREATE, ANNOTATION_COMMENT_CREATE,
-  ANNOTATION_COMMENT_UPDATE, ANNOTATION_COMMENT_DELETE, DIAG_CREATE, DIAG_LOAD, DIAG_UPDATE, DIAG_DELETE
+  SPACE_LOAD, SPACE_SET, DATASET_SET,
+  DIAG_CREATE, DIAG_LOAD, DIAG_UPDATE, DIAG_DELETE
 } from '../actions';
 import { Spaces, Space, Dataset, File, Annotation, Activity } from '../app';
 import { promiseDispatch, promiseDispatchWithActivity, dispatchError } from '../utils/uiutils';
@@ -9,23 +8,12 @@ import { promiseDispatch, promiseDispatchWithActivity, dispatchError } from '../
 /* eslint import/prefer-default-export: off */
 
 /**
- * Load spaces
- * @param {errorAction} object - Action to dispatch upon completion
- */
-export function spacesLoad(errorAction) {
-  return promiseDispatch((dispatch, getStore) => (Spaces.load(undefined, dispatch, getStore)),
-    SPACES_INIT, undefined,
-    dispatch => { if (errorAction) dispatch(errorAction); }
-  );
-}
-
-/**
  * Creates a new space
  * @param {string} id
  * @param {string} name
  */
-export function spaceCreate(id, name, spaces) {
-  return promiseDispatch(() => (Space.create(id, name, spaces)), SPACE_CREATE);
+export function spaceCreate(id, name) {
+  return Spaces.dispatchCreate(Space.create(id, name));
 }
 
 /**
@@ -33,16 +21,17 @@ export function spaceCreate(id, name, spaces) {
  * @param {Space} space
  */
 export function spaceUpdate(space) {
-  return promiseDispatch(() => (space.update()), SPACE_UPDATE);
+  return Spaces.dispatchUpdate(space.update());
 }
 
 /**
  * Loads a space from the API
- * @param {Space} space
+ * @param {Space} spaceId
  */
-export function spaceLoad(space) {
-  return promiseDispatch(() => (space.load()), SPACE_LOAD)
-    .then(() => Spaces.dispatchLoad(Activity.load(space)));
+export function spaceLoad(spaceId) {
+  return (dispatch) => {
+    return _spaceLoad(spaceId, dispatch);
+  };
 }
 
 /**
@@ -55,26 +44,38 @@ export function spaceLoad(space) {
  * @param {string} resolution
  */
 export function datasetCreate(space, name, description, tags, problem, resolution) {
-  return promiseDispatch(() => (
-    Dataset.create(space, name, description, tags, problem, resolution)
-  ), DATASET_CREATE);
+  return Spaces.dispatchCreate(Dataset.create(space, name, description, tags, problem, resolution));
 }
 
 /**
  * Loads a dataset from the API
- * @param {Dataset} dataset
+ * @param {string} spaceId
+ * @param {string} datasetId
  */
-export function datasetLoad(dataset) {
+export function datasetLoad(spaceId, datasetId) {
   return (dispatch, getStore) => {
-    _datasetLoad(dataset, dispatch, getStore);
+    _datasetLoad(spaceId, datasetId, dispatch, getStore);
   };
 }
 
-function _datasetLoad(dataset, dispatch, getStore) {
-  return Spaces.dispatchLoad(File.load(dataset))
-    .then(() => Spaces.dispatchLoad(Annotation.load(getStore().spaces.currentDataset())))
-    .then(() => (dataset.index()))
-    .then((payload) => { dispatch({ type: DATASET_LOAD, payload }); })
+function _datasetLoad(spaceId, datasetId, dispatch) {
+  let dataset;
+  return Dataset.load(spaceId, datasetId)
+    .then((d) => { dataset = d; return Spaces.dispatchLoad(File.load(dataset)); })
+    .then(() => Spaces.dispatchLoad(Annotation.load(dataset)))
+    .then(() => Spaces.dispatchLoad(dataset.index()))
+    .catch((error) => {
+      if (error !== 'Empty result set') {
+        return dispatchError(error, dispatch, DIAG_LOAD);
+      }
+    });
+}
+
+function _spaceLoad(spaceId, dispatch) {
+  let space;
+  return Spaces.dispatchLoad(Space.load(spaceId))
+    .then((s) => { space = s; return Spaces.dispatchLoad(Activity.load(space)); })
+    // TODO Move this to Spaces.dispatchLoad
     .catch((error) => {
       if (error !== 'Empty result set') {
         return dispatchError(error, dispatch, DIAG_LOAD);
@@ -86,8 +87,8 @@ function _datasetLoad(dataset, dispatch, getStore) {
  * Updates a dataset with the API
  * @param {Dataset} dataset
  */
-export function datasetUpdate(dataset, options) {
-  return promiseDispatch(() => (dataset.update(options)), DATASET_UPDATE);
+export function datasetUpdate(dataset) {
+  return Space.dispatchUpdate(dataset.update());
 }
 
 /**
@@ -208,18 +209,8 @@ export function setCurrentDataset(dataset) {
  */
 export function currentSpaceLoad() {
   return (dispatch, getStore) => (
-    getStore().spaces.currentSpace().load()
-      .then((payload) => {
-        dispatch({ type: SPACE_LOAD, payload });
-      })
-      .then(() => Spaces.dispatchLoad(Activity.load(getStore().spaces.currentSpace())))
-      .catch((error) => {
-        if (error !== 'Empty result set') {
-          return dispatchError(error, dispatch, SPACE_LOAD);
-        }
-      })
+    _spaceLoad(getStore().spaces.currentSpace().itemid())
   );
-  // return promiseDispatch((_, getStore) => (getStore().spaces.currentSpace().load()), SPACE_LOAD);
 }
 
 /**
@@ -227,6 +218,8 @@ export function currentSpaceLoad() {
  */
 export function currentDatasetLoad() {
   return (dispatch, getStore) => {
-    return _datasetLoad(getStore().spaces.currentDataset(), dispatch, getStore);
+    const spaceId = getStore().spaces.currentDataset().space().itemid();
+    const datasetId = getStore().spaces.currentDataset().dataset().itemid();
+    return _datasetLoad(spaceId, datasetId, dispatch, getStore);
   };
 }

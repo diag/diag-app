@@ -16,13 +16,14 @@ let s;
 
 beforeAll(() => {
   const space = new Space({ id: { item_id: 'foo' } });
-  const dataset = new Dataset(space, { id: { item_id: '10', space_id: 'foo' } });
-  const file = new File(dataset, { id: { item_id: '10', dataset_id: '10', space_id: 'foo' } });
-  space._datasets = { [dataset.itemid()]: dataset };
+  const dataset = new Dataset({ id: { item_id: '10', space_id: 'foo' } });
+  const file = new File({ id: { item_id: '10', dataset_id: '10', space_id: 'foo' } });
   // dataset._files = { [file.itemid()]: file };
 
   // TODO change how we create the spaces object to conform to new standards
   s = new Spaces({ [space.itemid()]: space });
+  s._space = [space];
+  s._dataset = [dataset];
   s._file = [file];
   s._store = () => s;
 
@@ -88,10 +89,24 @@ describe('Base properties', () => {
     expect(retd instanceof Dataset).toBeTruthy();
   });
 
+  it('should return datasets', () => {
+    const retd = t.datasets();
+    expect(retd).toHaveLength(1);
+    expect(retd[0].itemid()).toBe('10');
+    expect(retd[0] instanceof Dataset).toBeTruthy();
+  });
+
   it('should return a file', () => {
     const retf = t.file();
     expect(retf.itemid()).toBe('10');
     expect(retf instanceof File).toBeTruthy();
+  });
+
+  it('should return files', () => {
+    const retf = t.files();
+    expect(retf).toHaveLength(1);
+    expect(retf[0].itemid()).toBe('10');
+    expect(retf[0] instanceof File).toBeTruthy();
   });
 
   it('should insert itself into the store', () => {

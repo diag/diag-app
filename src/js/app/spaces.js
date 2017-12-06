@@ -5,6 +5,7 @@ import Dataset from './dataset';
 import File from './file';
 import Activity from './activity';
 import Annotation from './annotation';
+import Base from './base';
 
 let _store;
 let _dispatch;
@@ -12,11 +13,9 @@ let _dispatch;
 /** Top level class representing all spaces we have access to */
 export default class Spaces {
   /**
-   * Creates Spaces from data returned from API
-   * @param {Space[]} spaces - Spaces we have access to
+   * Creates Spaces, our holding object for state
    */
-  constructor(spaces) {
-    this._spaces = spaces === undefined ? {} : spaces;
+  constructor() {
     this._currentSpaceId = undefined;
     this._currentDatasetId = undefined;
   }
@@ -39,7 +38,6 @@ export default class Spaces {
     return _store();
   }
 
-
   /**
    * Returns a copy of Spaces
    * @returns {Spaces}
@@ -48,7 +46,6 @@ export default class Spaces {
     const ret = new Spaces();
     ret._currentSpaceId = this._currentSpaceId;
     ret._currentDatasetId = this._currentDatasetId;
-    ret._spaces = { ...this._spaces };
     return ret;
   }
 
@@ -56,14 +53,17 @@ export default class Spaces {
    * All spaces
    * @returns {Space[]}
    */
-  spaces() { return Object.values(this._spaces); }
+  spaces() { return Base.storeListByClass(Space, this, {}); }
 
   /**
    * Space to return
    * @param {string} sid - Space to return
    * @returns {Space}
    * */
-  space(sid) { return this._spaces[sid] === undefined ? new Space() : this._spaces[sid]; }
+  space(sid) {
+    const id = { item_id: sid };
+    return Space.storeGetByClass(Space, this, id);
+  }
 
   /**
    * Dataset to return
@@ -71,7 +71,20 @@ export default class Spaces {
    * @param {string} did - Dataset ID
    * @returns {Dataset}
    */
-  dataset(sid, did) { return this.space(sid).dataset(did); }
+  dataset(sid, did) {
+    const id = { space_id: sid, item_id: did };
+    return Dataset.storeGetByClass(Dataset, this, id);
+  }
+
+  /**
+   * Datasets to return
+   * @param {string} sid - Space ID
+   * @returns {Dataset[]}
+   */
+  datasets(sid) {
+    const id = { space_id: sid };
+    return Dataset.storeListByClass(Dataset, this, id);
+  }
 
   /**
    * File to return
@@ -139,159 +152,14 @@ export default class Spaces {
   /**
    * Load from API
    * @param {Promise<Space>} spacesPromise - Promise which returns a list of spaces
-   * @param {function} dispatch - Dispatch function for redux
-   * @param {function} getStore - Store function for redux
    * @returns {Promise<Spaces>}
   */
-  static load(spacesPromise, dispatch, getStore) {
+  static load(spacesPromise) {
     if (!spacesPromise) {
       spacesPromise = getAllSpaces();
     }
     return spacesPromise
-      .then((payload) => {
-        let ret = {};
-        if (payload.count > 0) {
-          ret = payload.items.map(s => new Space(s)).reduce((spaces, s) => { spaces[s.itemid()] = s; return spaces; }, {});
-        }
-        return new Promise((resolve) => { resolve(new Spaces(ret, dispatch, getStore)); });
-      });
-  }
-
-  /**
-   * Inserts space into a copy of Spaces object
-   * @param {Space} space
-   * @returns {Spaces}
-   */
-  insert(space) {
-    const ret = this.copy();
-    ret._spaces = { ...this._spaces, [space.itemid()]: space };
-    return ret;
-  }
-
-  /**
-   * Replaces space in copy of Spaces object
-   * @param {Space} space
-   * @returns {Spaces}
-   */
-  update(space) {
-    const ret = this.copy();
-    ret._spaces = { ...this._spaces };
-    ret._spaces[space.itemid()] = space;
-    return ret;
-  }
-
-  /**
-   * Inserts a dataset into a copy of Spaces object
-   * @param {Dataset} dataset
-   * @returns {Spaces}
-   */
-  insertDataset(dataset) {
-    const spaceId = dataset.space().itemid();
-    const newSpace = this.space(spaceId).insertDataset(dataset);
-    return this.update(newSpace);
-  }
-
-  /**
-   * Inserts activity into a copy of the Spaces object
-   * @param {Activity} activity
-   * @returns {Spaces}
-   */
-  insertActivity(activity) {
-    const spaceId = activity.space().itemid();
-    const newSpace = this.space(spaceId).insertActivity(activity);
-    const dsId = activity.dataset().itemid();
-    if (dsId !== undefined) {
-      switch (activity.type) {
-      case 'annotation':
-        newSpace.dataset(dsId).annotation_count++;
-        break;
-      case 'upload':
-        newSpace.dataset(dsId).file_count++;
-        break;
-      case 'search':
-        newSpace.dataset(dsId).search_count++;
-        break;
-      default:
-        break;
-      }
-    }
-    return this.update(newSpace);
-  }
-
-  /**
-   * Inserts a file into a copy of the Spaces object
-   * @param {File} file
-   * @returns {Spaces}
-   */
-  insertFile(file) {
-    const spaceId = file.space().itemid();
-    const datasetId = file.dataset().itemid();
-    const newDataset = this.dataset(spaceId, datasetId).insertFile(file);
-    const newSpace = this.space(spaceId).updateDataset(newDataset);
-    return this.update(newSpace);
-  }
-
-  /**
-   * Inserts an annotation into a copy of the Spaces object
-   * @param {Annotation} annotation
-   * @returns {Spaces}
-   */
-  insertAnnotation(annotation) {
-    const spaceId = annotation.space().itemid();
-    const datasetId = annotation.dataset().itemid();
-    const newDataset = this.dataset(spaceId, datasetId).insertAnnotation(annotation);
-    const newSpace = this.space(spaceId).updateDataset(newDataset);
-    return this.update(newSpace);
-  }
-
-  /**
-   * Update an annotation into a copy of the Spaces object
-   * @param {Annotation} annotation
-   * @returns {Spaces}
-   */
-  updateAnnotation(annotation) {
-    const spaceId = annotation.space().itemid();
-    const datasetId = annotation.dataset().itemid();
-    const newDataset = this.dataset(spaceId, datasetId).updateAnnotation(annotation);
-    const newSpace = this.space(spaceId).updateDataset(newDataset);
-    return this.update(newSpace);
-  }
-
-  /**
-   * Deletes an annotation from a copy of the Spaces object
-   * @param {Annotation} annotation
-   * @returns {Spaces}
-   */
-  deleteAnnotation(annotation) {
-    const spaceId = annotation.space().itemid();
-    const datasetId = annotation.dataset().itemid();
-    const newDataset = this.dataset(spaceId, datasetId).deleteAnnotation(annotation);
-    const newSpace = this.space(spaceId).updateDataset(newDataset);
-    return this.update(newSpace);
-  }
-
-  /**
-   * Updates a dataset into a copy of the Spaces object
-   * @param {Dataset} dataset
-   * @returns {Spaces}
-   */
-  updateDataset(dataset) {
-    const spaceId = dataset.space().itemid();
-    const newSpace = this.space(spaceId).updateDataset(dataset);
-    return this.update(newSpace);
-  }
-
-  /**
-   * Updates a file into a copy of the Spaces object
-   * @param {File} file
-   * @returns {Spaces}
-   */
-  updateFile(file) {
-    const spaceId = file.space().itemid();
-    const datasetId = file.dataset().itemid();
-    const newDataset = this.dataset(spaceId, datasetId).updateFile(file);
-    const newSpace = this.space(spaceId).updateDataset(newDataset);
-    return this.update(newSpace);
+      .then((payload) => payload.items.map(s => new Space(s)));
   }
 
   /**

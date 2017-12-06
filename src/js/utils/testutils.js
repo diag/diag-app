@@ -76,7 +76,9 @@ export function testData() {
   return {
     TID,
     spaceId: `space${TID}`,
+    space2Id: `space2${TID}`,
     spaceName: `spacename${TID}`,
+    space2Name: `space2name${TID}`,
     owner: `user@${TID}`,
     spaces: new Spaces(),
     d1orig: dataset1orig,
@@ -85,6 +87,7 @@ export function testData() {
     f2orig: file2orig,
     f3orig: file3orig,
     interimState: {},
+    initialState: {},
   };
 }
 

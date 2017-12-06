@@ -17,7 +17,7 @@ let td;
 
 beforeAll(() => {
   td = tu.testData();
-  return tu.testSetup('annotation-test', td.TID)
+  return tu.testSetup('file-test', td.TID)
     .then(() => {
       const middlewares = [thunk];
       const mockStore = configureMockStore(middlewares);
@@ -30,23 +30,23 @@ beforeAll(() => {
     .then(() => (Space.create(td.spaceId, td.spaceName)))
     .then(() => (Spaces.load()))
     .then((spaces) => {
-      td.spaces = spaces;
+      td.spaces = Spaces.reduce(new Spaces(), { type: 'DIAG_LOAD', payload: spaces });
       td.space = () => td.spaces.space(td.spaceId);
       return Dataset.create(td.space(), td.d1orig.name, td.d1orig.description, td.d1orig.tags, td.d1orig.problem, td.d1orig.resolution);
     })
     .then((dataset) => {
       td.datasetId = dataset.itemid();
-      td.spaces = td.spaces.insertDataset(dataset);
+      td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_CREATE', payload: dataset });
       td.dataset = () => td.spaces.dataset(td.spaceId, td.datasetId);
       return Dataset.create(td.space(), td.d2orig.name, td.d2orig.description, td.d2orig.tags, td.d2orig.problem, td.d2orig.resolution);
     })
     .then((dataset2) => {
       td.dataset2Id = dataset2.itemid();
-      td.spaces = td.spaces.insertDataset(dataset2);
+      td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_CREATE', payload: dataset2 });
       td.dataset2 = () => td.spaces.dataset(td.spaceId, td.dataset2Id)
     });
 });
-afterAll(() => (tu.testTearDown('annotation-test')));
+afterAll(() => (tu.testTearDown('file-test')));
 
 describe('App Files', () => {
   it('Wont save without dataset', () => {
@@ -80,6 +80,10 @@ describe('App Files', () => {
         console.log(err);
       })
   ));
+
+  it('wont load without dataset', () => {
+    expect(File.load(undefined)).rejects.toBeDefined();
+  });
 
   it('File.load() loads', () => (
     File.load(td.dataset())
@@ -198,9 +202,9 @@ describe('Redux Files', () => {
       Spaces.dispatchLoad(File.load(td.dataset()))
         .then(() => {
           const actions = td.store.getActions();
-          expect(actions).toHaveLength(1);
+          expect(actions.length).toBeGreaterThan(0);
           expect(actions[0].type).toBe(DIAG_LOAD);
-          expect(actions[0].payload).toHaveLength(1);
+          expect(actions[0].payload.length).toBeGreaterThan(0);
           td.fileLoadAction = actions[0];
           td.file = td.fileLoadAction.payload;
         })

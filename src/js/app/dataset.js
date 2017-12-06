@@ -1,83 +1,19 @@
 import { getDataset, postDataset, patchDataset } from '../api/datasets';
-import { props, isArchiveFile, pushTo, hackParent } from '../utils/apputils';
+import { checkEmpty } from '../utils/apputils';
 import { Index } from 'diag-search/src/js/search';
 import Spaces from './spaces';
 import Space from './space';
+import Base from './base';
 
 /** Dataset containing files and activity */
-export default class Dataset {
+export default class Dataset extends Base {
   /**
    * Create a dataset
-   * @param {Space} parent - Space object pointing to the parent of this dataset
    * @param {Object} dataset - Dataset returned from the backend
    */
-  constructor(parent, dataset) {
+  constructor(dataset) {
+    super(Spaces.store);
     Object.assign(this, dataset);
-    this._files = {};
-    this._annotations = {};
-    this._parent = parent;
-  }
-
-  /**
-   * Shallow copy of this dataset
-   * @returns {Dataset}
-  */
-  copy() {
-    // console.log('dataset copy: ' + (new Error()).stack)
-    const ret = Object.assign({}, this, { _files: undefined, _annotations: undefined });
-    return new Dataset(this._parent, ret);
-  }
-
-  /**
-   * Dataset ID as a string
-   * @returns {string}
-  */
-  itemid() { return typeof this.id !== 'object' ? undefined : this.id.item_id; }
-
-  /**
-   * The parent Space
-   * @returns {Space}
-   */
-  space() { return this._parent; }
-
-  /**
-   * This
-   * @returns {Dataset}
-   */
-  dataset() { return this; }
-
-  /**
-   * Particular file by file ID
-   * @param {string} fid - File ID
-   * @returns {File}
-  */
-  file(fid) { return Spaces.store().file(this.space().itemid(), this.itemid(), fid); }
-
-  /**
-   * All files
-   * @returns {File[]}
-   */
-  files() { return Spaces.store().files(this.id); }
-
-  /**
-   * Activity
-   * @returns {Activity[]}
-   */
-  activity() { return Spaces.store().activity(this.id); }
-
-  /**
-   * Annotations
-   * @param {string} [fid] - File ID (optional)
-   * @returns {Annotations[]}
-   */
-  annotations(fid) {
-    let id;
-    if (fid) {
-      id = { space_id: this.space().itemid(), dataset_id: this.dataset().itemid(), item_id: fid };
-    } else {
-      id = this.id;
-    }
-    return Spaces.store().annotations(id);
   }
 
   /**
@@ -92,12 +28,6 @@ export default class Dataset {
    * @returns {string}
    */
   static url(did) { return did === undefined || did.space_id === undefined || did.item_id === undefined ? undefined : `/dataset/${did.space_id}/${did.item_id}`; }
-
-  /**
-   * Returns non-private dataset properties in a shallow object copy
-   * @returns {object}
-   */
-  props() { return props(this); }
 
   _initIndex() {
     if (this._index) {
@@ -138,20 +68,6 @@ export default class Dataset {
     }
   }
 
-  _updateFiles(toAdd, toRemove) {
-    // remove/add files
-    for (let i = 0; i < toAdd.length; ++i) {
-      this._files[toAdd[i].itemid()] = toAdd[i];
-      this.file_count++;
-    }
-    for (let i = 0; i < toRemove.length; ++i) {
-      if (this._files[toRemove[i].itemid()]) {
-        delete this._files[toRemove[i].itemid()];
-        this.file_count--;
-      }
-    }
-  }
-
   /**
    * Indexes files currently loaded in the dataset
    */
@@ -176,12 +92,15 @@ export default class Dataset {
    * @param {string} datasetId - ID of the dataset to retrieve from the API
    * @returns {Promise<dataset>}
    */
-  static load(space, datasetId) {
-    return space.load(getDataset(space.itemid(), datasetId))
-      .then((s) => {
-        return Promise.resolve(new Spaces({ [s.itemid()]: s }));
-      });
+  static load(spaceId, datasetId) {
+    return getDataset(spaceId, datasetId)
+      .then(payload => (
+        checkEmpty(payload, () => (
+          payload.items.map(i => new Dataset(i))
+        ))
+      ));
   }
+
   /**
    * Saves dataset to the API
    * @param {Space} space - Space object of parent
@@ -193,6 +112,7 @@ export default class Dataset {
    * @returns {Promise<Dataset>}
    */
   static create(space, name, description, tags, problem, resolution) {
+    debugger;
     if (space === undefined) {
       return Promise.reject('space undefined');
     }
@@ -208,7 +128,7 @@ export default class Dataset {
     return postDataset(space.itemid(), name, description, tags, problem, resolution)
       .then((payload) => {
         if (payload.count > 0) {
-          return new Promise(resolve => resolve(new Dataset(space, payload.items[0])));
+          return new Promise(resolve => resolve(new Dataset(payload.items[0])));
         }
         return Promise.reject('Empty result set');
       });
@@ -232,76 +152,5 @@ export default class Dataset {
         }
         return Promise.reject('Empty result set');
       });
-  }
-  /**
-   * Inserts file into copy of the dataset
-   * @param {File} file
-   * @returns {Dataset}
-   */
-  insertFile(file) {
-    if (isArchiveFile(file.name)) { // don't insert archive files, they've been already expanded
-      return this;
-    }
-    const ret = this.copy();
-    ret._files = { ...this._files, [file.itemid()]: file };
-    ret._annotations = this._annotations; // Not mutating annotations, return original
-    return ret;
-  }
-  /**
-   * Inserts annotation into copy of the dataset
-   * @param {Annotation} annotation
-   * @returns {Dataset}
-   */
-  insertAnnotation(annotation) {
-    const ret = this.copy();
-    ret._files = this._files;
-    // HACK Not supposed to mutate existing datastructures, but need to update file parent
-    ret.files().forEach(f => f._parent = ret);
-    ret._annotations = { ...this._annotations };
-    const fa = ret._annotations[annotation.file().itemid()];
-    ret._annotations[annotation.file().itemid()] = pushTo(fa, annotation);
-    return ret;
-  }
-  /**
-   * Updates an annotation in a copy of the dataset
-   * @param {Annotation} annotation
-   * @returns {Dataset}
-   */
-  updateAnnotation(annotation) {
-    const ret = this.copy();
-    ret._files = this._files;
-    // HACK Not supposed to mutate existing datastructures, but need to update file parent
-    hackParent(ret.files(), ret);
-    ret._annotations = { ...this._annotations };
-    const fa = (ret._annotations[annotation.file().itemid()] || []).filter(a => a.itemid() !== annotation.itemid());
-    ret._annotations[annotation.file().itemid()] = pushTo(fa, annotation);
-    return ret;
-  }
-  /**
-   * Deletes an annotation in a copy of the dataset
-   * @param {Annotation} annotation
-   * @returns {Dataset}
-   */
-  deleteAnnotation(annotation) {
-    const ret = this.copy();
-    ret._files = this._files;
-    // HACK Not supposed to mutate existing datastructures, but need to update file parent
-    hackParent(ret.files(), ret);
-    ret._annotations = { ...this._annotations };
-    const fa = (ret._annotations[annotation.file().itemid()] || []).filter(a => a.itemid() !== annotation.itemid());
-    ret._annotations[annotation.file().itemid()] = fa;
-    return ret;
-  }
-  /**
-   * Inserts file into copy of the dataset
-   * @param {File} file
-   * @returns {Dataset}
-   */
-  updateFile(file) {
-    const ret = this.copy();
-    ret._files = { ...this._files };
-    ret._files[file.itemid()] = file;
-    ret._annotations = this._annotations; // Not mutating annotations, return original
-    return ret;
   }
 }

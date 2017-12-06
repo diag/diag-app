@@ -16,10 +16,9 @@ import isEqual from 'lodash/fp/isEqual';
 export default class File extends Base {
   /**
    * Creates a file
-   * @param {Dataset} parent - Dataset object pointing to parent
    * @param {Object} file - File object returned from API
    */
-  constructor(parent, file) {
+  constructor(file) {
     super(Spaces.store);
     Object.assign(this, file);
   }
@@ -113,7 +112,7 @@ export default class File extends Base {
       .then((payload) => {
         if (payload.count > 0) {
           return new Promise((resolve) => {
-            const f = new File(dataset, payload.items[0]);
+            const f = new File(payload.items[0]);
             if (typeof (content) === 'string' || content instanceof String) {
               const encoder = new TextEncoder('utf8');
               const buf = encoder.encode(content).buffer; // TextEncoder returns UInt8Array
@@ -180,7 +179,7 @@ export default class File extends Base {
     return getFiles(dataset.space().itemid(), dataset.itemid())
       .then(payload => (
         payload.items.map(f => {
-          const mf = new File(dataset, f);
+          const mf = new File(f);
           // TODO: consider potential cache size bloat
           const cf = dataset.file(mf.itemid());
           if (cf) {
@@ -219,7 +218,7 @@ export default class File extends Base {
           })
           .then(() => {
             const endTime = Date.now();
-            console.log(`${endTime} - download & index done in ${endTime - startTime} ms`);
+            console.log(`${endTime} - download done in ${endTime - startTime} ms`);
           })
           .then(() => (Promise.resolve(ret)));
       })

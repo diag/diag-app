@@ -85,11 +85,17 @@ export default class Base {
 
   /**
    * The parent Dataset
+   * @param {string} did - Dataset ID to access
    * @returns {Dataset}
    */
-  dataset() {
-    const datasetId = this.id.dataset_id ? this.id.dataset_id : this.id.item_id;
-    const spaceId = this.id.space_id;
+  dataset(did) {
+    let datasetId;
+    if (!did) {
+      datasetId = this.id.dataset_id ? this.id.dataset_id : this.id.item_id;
+    } else {
+      datasetId = did;
+    }
+    const spaceId = this.id.space_id ? this.id.space_id : this.id.item_id;
     if (!datasetId || !spaceId) {
       return undefined;
     }
@@ -97,13 +103,30 @@ export default class Base {
   }
 
   /**
+   * Child datasets
+   */
+  datasets() {
+    const spaceId = this.id.space_id ? this.id.space_id : this.id.item_id;
+    if (!spaceId) {
+      return undefined;
+    }
+    return this._store().datasets(spaceId);
+  }
+
+  /**
    * The parent File
+   * @param {string} fid - File ID to access
    * @returns {File}
    */
-  file() {
-    const fileId = this.id.file_id ? this.id.file_id : this.id.item_id;
-    const datasetId = this.id.dataset_id;
-    const spaceId = this.id.space_id;
+  file(fid) {
+    let fileId;
+    if (!fid) {
+      fileId = this.id.file_id ? this.id.file_id : this.id.item_id;
+    } else {
+      fileId = fid;
+    }
+    const datasetId = this.id.dataset_id ? this.id.dataset_id : this.id.item_id;
+    const spaceId = this.id.space_id ? this.id.space_id : this.id.item_id;
     if (!fileId || !datasetId || !spaceId) {
       return undefined;
     }
@@ -111,10 +134,30 @@ export default class Base {
   }
 
   /**
+   * Child files
+   */
+  files() {
+    const datasetId = this.id.dataset_id ? this.id.dataset_id : this.id.item_id;
+    const spaceId = this.id.space_id;
+    if (!datasetId || !spaceId) {
+      return undefined;
+    }
+    const id = { space_id: spaceId, dataset_id: datasetId };
+    return this._store().files(id);
+  }
+
+  /**
    * Annotations
    */
   annotations() {
     return this._store().annotations(this.id);
+  }
+
+  /**
+   * Activity
+   */
+  activity() {
+    return this._store().activity(this.id);
   }
 
   /**

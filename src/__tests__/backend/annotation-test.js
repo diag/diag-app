@@ -28,21 +28,21 @@ beforeAll(() => {
       return Promise.resolve();
     })
     .then(() => (Space.create(td.spaceId, td.spaceName)))
-    .then(() => (Spaces.load()))
-    .then((spaces) => {
-      td.spaces = spaces;
+    .then(() => Spaces.load())
+    .then((ss) => {
+      td.spaces = Spaces.reduce(new Spaces(), { type: 'DIAG_LOAD', payload: ss });
       td.space = () => td.spaces.space(td.spaceId);
       return Dataset.create(td.space(), td.d1orig.name, td.d1orig.description, td.d1orig.tags, td.d1orig.problem, td.d1orig.resolution);
     })
     .then((dataset) => {
       td.datasetId = dataset.itemid();
-      td.spaces = td.spaces.insertDataset(dataset);
+      td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_CREATE', payload: dataset });
       td.dataset = () => td.spaces.dataset(td.spaceId, td.datasetId);
       return File.create(td.dataset(), td.f1orig.name, td.f1orig.description, td.f1orig.contentType, td.f1orig.content.length, td.f1orig.content);
     })
     .then((file) => {
       td.fileId = file.itemid();
-      td.spaces = td.spaces.insertFile(file);
+      td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_CREATE', payload: file });
       td.file = () => td.spaces.file(td.spaceId, td.datasetId, td.fileId);
     });
 });
@@ -199,7 +199,7 @@ describe('App Annotations', () => {
         Annotation.load(td.dataset())
       ))
       .then((payload) => {
-        expect(payload.annotations().length).toBe(0);
+        expect(payload).toHaveLength(0);
       });
   });
 });

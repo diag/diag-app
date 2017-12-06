@@ -332,7 +332,7 @@ describe('Redux Annotations', () => {
     });
 
 
-    it('should handle fileLoad', () => {
+    it('should handle annotationLoad', () => {
       expect(reducer(td.interimState, td.annotationLoadAction))
         .toEqual(Spaces.reduce(td.interimState, td.annotationLoadAction));
     });

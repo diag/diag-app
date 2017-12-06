@@ -2,6 +2,7 @@ import { getAllSpaces } from '../api/datasets';
 import { dispatchError } from '../utils/uiutils';
 import Space from './space';
 import Dataset from './dataset';
+import File from './file';
 import Activity from './activity';
 import Annotation from './annotation';
 
@@ -78,7 +79,19 @@ export default class Spaces {
    * @param {string} did - Dataset ID
    * @param {string} fid - File ID
    */
-  file(sid, did, fid) { return this.space(sid).dataset(did).file(fid); }
+  file(sid, did, fid) {
+    const id = { space_id: sid, dataset_id: did, item_id: fid };
+    return File.storeGetByClass(File, this, id);
+  }
+
+  /**
+   * Files to return
+   * @param {object} id - ID to filter files
+   * @returns {File[]}
+   */
+  files(id) {
+    return File.storeListByClass(File, this, id);
+  }
 
   /**
    * Spaces owned by a user

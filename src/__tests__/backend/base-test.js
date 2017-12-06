@@ -9,6 +9,9 @@ let t2;
 let t3;
 let t4;
 let t5;
+let t6;
+let t7;
+let t8;
 let s;
 
 beforeAll(() => {
@@ -16,10 +19,11 @@ beforeAll(() => {
   const dataset = new Dataset(space, { id: { item_id: '10', space_id: 'foo' } });
   const file = new File(dataset, { id: { item_id: '10', dataset_id: '10', space_id: 'foo' } });
   space._datasets = { [dataset.itemid()]: dataset };
-  dataset._files = { [file.itemid()]: file };
+  // dataset._files = { [file.itemid()]: file };
 
   // TODO change how we create the spaces object to conform to new standards
   s = new Spaces({ [space.itemid()]: space });
+  s._file = [file];
   s._store = () => s;
 
   class Test extends Base {
@@ -34,6 +38,9 @@ beforeAll(() => {
   t3 = new Test({ space_id: 'foo', dataset_id: '11', file_id: '11', item_id: '10' });
   t4 = new Test({ space_id: 'foo2', dataset_id: '11', file_id: '11', item_id: '10' });
   t5 = new Test({ space_id: 'foo2', dataset_id: '11', file_id: '11', item_id: '11' });
+  t6 = new Test({ item_id: 'foo2' });
+  t7 = new Test({ space_id: 'foo', item_id: '12' });
+  t8 = new Test({ space_id: 'foo', dataset_id: '12', item_id: '12' });
 });
 
 function updateStore(store) {
@@ -153,10 +160,10 @@ describe('Base properties', () => {
   });
 
   it('should retrieve the right things with storeGet', () => {
-    updateStore(t.storeLoad([t, t2, t3, t4]));
-    expect(t.storeGet({ item_id: 'foo2' })).toEqual(t4); // passed a space id
-    expect(t.storeGet({ space_id: 'foo', item_id: '11' })).toEqual(t3);
-    expect(t.storeGet({ space_id: 'foo', dataset_id: '11', item_id: '11' })).toEqual(t3);
+    updateStore(t.storeLoad([t, t2, t3, t4, t5, t6, t7, t8]));
+    expect(t.storeGet({ item_id: 'foo2' })).toEqual(t6); // passed a space id
+    expect(t.storeGet({ space_id: 'foo', item_id: '12' })).toEqual(t7);
+    expect(t.storeGet({ space_id: 'foo', dataset_id: '12', item_id: '12' })).toEqual(t8);
     expect(t.storeGet({ space_id: 'foo2', dataset_id: '11', file_id: '11', item_id: '10' })).toEqual(t4);
     expect(t.storeGet({ space_id: 'foo3' })).toBeUndefined();
   });
@@ -167,4 +174,3 @@ describe('Base properties', () => {
     expect(t.storeGet({ item_id: 'foo2' })).toBeUndefined();
   });
 });
-

@@ -1,60 +1,28 @@
 import {
-  getFileContent, uploadFile,
+  getFileContent, uploadFile, getFiles,
 } from '../api/datasets';
-import { props, isArchiveFile, gunzipIfNeeded } from '../utils/apputils';
+import { props, isArchiveFile, gunzipIfNeeded, isZipArchive, isTarArchive, StrStream } from '../utils/apputils';
+import { extract } from 'tar-stream';
+import JSZip from 'jszip';
 import Spaces from './spaces';
 import Dataset from './dataset';
+import Base from './base';
 import { TextEncoder, TextDecoder } from 'text-encoding';
+import isEqual from 'lodash/fp/isEqual';
 
 /* global FileReader */
 
 /** File uploaded to API with activity and annotations */
-export default class File {
+export default class File extends Base {
   /**
    * Creates a file
    * @param {Dataset} parent - Dataset object pointing to parent
    * @param {Object} file - File object returned from API
    */
   constructor(parent, file) {
+    super(Spaces.store);
     Object.assign(this, file);
-    this._parent = parent;
   }
-
-  /**
-   * Shallow copy of this file
-   * @returns {File}
-  */
-  copy() { return new File(this._parent, this); }
-
-  /**
-   * File ID as a string
-   * @returns {string}
-  */
-  itemid() { return typeof this.id !== 'object' ? undefined : this.id.item_id; }
-
-  /**
-   * The parent Space
-   * @returns {Space}
-   */
-  space() { return this.dataset().space(); }
-
-  /**
-   * The parent Dataset
-   * @returns {Dataset}
-   */
-  dataset() { return this._parent; }
-
-  /**
-   * Activity
-   * @returns {Activity[]}
-   */
-  activity() { return Spaces.store().activity(this.id); }
-
-  /**
-   * Annotations
-   * @returns {Annotations[]}
-   */
-  annotations() { return Spaces.store().annotations(this.id); }
 
   /**
    * Content of the file after being decoded
@@ -195,5 +163,173 @@ export default class File {
         }
         return Promise.reject('Empty result set');
       });
+  }
+
+  /**
+   * Loads files from the API
+   * @param {Dataset} dataset - Dataset to fetch files for
+   * @returns {Promise<File[]>}
+   */
+  static load(dataset) {
+    if (dataset === undefined) {
+      return Promise.reject('dataset undefined');
+    }
+    if (!(dataset instanceof Dataset)) {
+      return Promise.reject('dataset is not an instance of Dataset');
+    }
+    return getFiles(dataset.space().itemid(), dataset.itemid())
+      .then(payload => (
+        payload.items.map(f => {
+          const mf = new File(dataset, f);
+          // TODO: consider potential cache size bloat
+          const cf = dataset.file(mf.itemid());
+          if (cf) {
+            mf.setRawContent(cf.rawContent());
+          }
+          return mf;
+        })
+      ))
+      .then((files) => {
+        let ret = [...files];
+        // download and index files in the DS
+        // TODO; move this to a bg task
+        const startTime = Date.now();
+        console.log(`${startTime} - download start`);
+        const downloads = [];
+
+        const filesToAdd = [];
+        const filesToRemove = [];
+        files.forEach((f) => {
+          downloads.push(
+            f.load()
+              .then((newf) => {
+                console.log(`${Date.now()} - downloaded file=${f.name}`);
+                f.setRawContent(newf.rawContent()); // copy content from newF
+                return File._expandArchive(newf, filesToAdd, filesToRemove);
+              }).catch((err) => {
+                console.error(`Failed to load contents of dataset=${dataset.name}, file=${f.name}, err=${err}`);
+              })
+          );
+        });
+        return Promise.all(downloads)
+          .then(() => {
+            // remove/add files
+            ret = [...ret, ...filesToAdd].filter(f => filesToRemove.findIndex(fr => isEqual(fr.id, f.id)) === -1);
+            // ret._updateFiles(filesToAdd, filesToRemove);
+          })
+          .then(() => {
+            const endTime = Date.now();
+            console.log(`${endTime} - download & index done in ${endTime - startTime} ms`);
+          })
+          .then(() => (Promise.resolve(ret)));
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+    // return getFiles(this.space().itemid(), this.itemid())
+    //   .then(payload => (
+    //     checkEmpty(payload, () => {
+    //       const ret = this.copy();
+    //       ret._files = payload.items.map(f => new File(ret, f)).reduce((files, f) => { files[f.itemid()] = f; return files; }, {});
+    //       return ret;
+    //       // return new Promise(resolve => resolve(ret));
+    //     })
+    //   ));
+  }
+
+  /* eslint prefer-template: off */
+  static _expandArchive(f, toAdd, toRemove) {
+    if (!isArchiveFile(f.name)) {
+      return Promise.resolve('regular-file');
+    }
+
+    const addFileFromArchive = (name, bytes, size) => {
+      const nf = f.copy();
+      nf.id = Object.assign({}, f.id);
+      nf.setRawContent(bytes);
+      nf.id.item_id += ':' + toAdd.length;
+      nf.name = f.name + '/' + name;
+      nf.size = size;
+      toAdd.push(nf);
+    };
+
+    if (isZipArchive(f.name)) {
+      toRemove.push(f);
+      return new Promise((resolve, reject) => {
+        console.log(`processing zip archive, file=${f.name} ... `);
+        JSZip.loadAsync(f.rawContent())
+          .catch((err) => {
+            reject(err);
+          })
+          .then((zip) => {
+            const promises = [];
+            zip.forEach((path, zipFile) => {
+              if (zipFile.dir) {
+                return; // nop
+              }
+              console.log(`${Date.now()} - start zipentry=${zipFile.name}...`);
+              promises.push(
+                zipFile.async('uint8array')
+                  .catch((err) => {
+                    reject(err);
+                  })
+                  .then((u8) => {
+                    addFileFromArchive(zipFile.name, u8.buffer, u8.byteLength);
+                    console.log(`${Date.now()} - end zip entry=${zipFile.name}, size=${u8.byteLength} ...`);
+                  })
+              );
+            });
+            Promise.all(promises)
+              .then(() => {
+                resolve('zip-archive-file-done');
+              });
+          });
+      });
+    }
+
+    if (isTarArchive(f.name)) {
+      toRemove.push(f);
+      return new Promise((resolve, reject) => {
+        const ext = extract();
+        ext.on('entry', (header, stream, next) => {
+          console.log(`${Date.now()} - start tar entry=${header.name}...`);
+          const bytes = new ArrayBuffer(header.size);
+          const content = new Uint8Array(bytes);
+          let len = 0;
+          stream.on('end', () => {
+            if (header.size > 0 && header.type !== 'directory') {
+              addFileFromArchive(header.name, bytes, header.size);
+            }
+            console.log(`${Date.now()} - end tar entry=${header.name}, size=${header.size} ...`);
+            next(); // ready for next entry
+          });
+
+          stream.resume()
+            .on('data', (d) => {
+              content.set(d, len);
+              len += d.byteLength;
+            });
+        });
+
+        // all entries read
+        ext.on('finish', () => {
+          resolve('tar-archive-file-done');
+        });
+
+        ext.on('error', (err) => {
+          reject(err);
+        });
+
+
+        // NOTE: raw content will be decompressed already, due to content-encoding being set to gzip
+        // however in some cases/browsers depending on content-type the contents might NOT be decompressed
+        gunzipIfNeeded(f.name, f.rawContent(), (err, buf) => {
+          const s = new StrStream(buf);
+          s.pipe(ext);
+        });
+      });
+    }
+
+    return Promise.reject(`unsupported archive file=${f.name}, likely a bug`);
   }
 }

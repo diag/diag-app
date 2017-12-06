@@ -51,7 +51,7 @@ export default class Annotation extends Base {
   /**
    * Loads annotations from the API
    * @param {Dataset} dataset - Dataset to fetch annotations for
-   * @returns {Promise<Annotation>}
+   * @returns {Promise<Annotation[]>}
    */
   static load(dataset) {
     if (dataset === undefined) {

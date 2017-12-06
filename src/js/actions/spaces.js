@@ -1,7 +1,7 @@
 import {
   SPACES_INIT, SPACE_CREATE, SPACE_LOAD, SPACE_UPDATE, SPACE_SET, DATASET_LOAD, DATASET_CREATE, DATASET_UPDATE, DATASET_SET,
   FILE_LOAD, FILE_CREATE, ANNOTATION_CREATE, ANNOTATION_UPDATE, ANNOTATION_DELETE, ACTIVITY_CREATE, ANNOTATION_COMMENT_CREATE,
-  ANNOTATION_COMMENT_UPDATE, ANNOTATION_COMMENT_DELETE, DIAG_CREATE, DIAG_UPDATE, DIAG_DELETE
+  ANNOTATION_COMMENT_UPDATE, ANNOTATION_COMMENT_DELETE, DIAG_CREATE, DIAG_LOAD, DIAG_UPDATE, DIAG_DELETE
 } from '../actions';
 import { Spaces, Space, Dataset, File, Annotation, Activity } from '../app';
 import { promiseDispatch, promiseDispatchWithActivity, dispatchError } from '../utils/uiutils';
@@ -65,8 +65,21 @@ export function datasetCreate(space, name, description, tags, problem, resolutio
  * @param {Dataset} dataset
  */
 export function datasetLoad(dataset) {
-  return promiseDispatch(() => (dataset.load()), DATASET_LOAD)
-    .then(() => Spaces.dispatchLoad(Annotation.load(dataset)));
+  return (dispatch, getStore) => {
+    _datasetLoad(dataset, dispatch, getStore);
+  };
+}
+
+function _datasetLoad(dataset, dispatch, getStore) {
+  return Spaces.dispatchLoad(File.load(dataset))
+    .then(() => Spaces.dispatchLoad(Annotation.load(getStore().spaces.currentDataset())))
+    .then(() => (dataset.index()))
+    .then((payload) => { dispatch({ type: DATASET_LOAD, payload }); })
+    .catch((error) => {
+      if (error !== 'Empty result set') {
+        return dispatchError(error, dispatch, DIAG_LOAD);
+      }
+    });
 }
 
 /**
@@ -87,23 +100,8 @@ export function datasetUpdate(dataset, options) {
  * @param {string} content
  */
 export function fileCreate(dataset, name, description, contentType, size, content) {
-  return dispatch => (
-    File.create(dataset, name, description, contentType, size, content)
-      .catch((error) => {
-        return dispatchError(error, dispatch, FILE_CREATE);
-      })
-      .then((f) => {
-        dispatch({ type: FILE_CREATE, payload: f });
-        return Activity.create(f, 'upload', { name: f.name, id: f.id })
-          .then((a) => {
-            dispatch({ type: ACTIVITY_CREATE, payload: a });
-            return Promise.resolve();
-          })
-          .catch((error) => {
-            return dispatchError(error, dispatch, ACTIVITY_CREATE);
-          });
-      })
-  );
+  return Spaces.dispatchCreate(File.create(dataset, name, description, contentType, size, content))
+    .then((f) => (Spaces.dispatchCreate(Activity.create(f, 'upload', { name: f.name, id: f.id }))));
 }
 
 /**
@@ -111,7 +109,7 @@ export function fileCreate(dataset, name, description, contentType, size, conten
  * @param {File} file
  */
 export function fileLoad(file) {
-  return promiseDispatch(() => (file.load()), FILE_LOAD);
+  return Spaces.dispatchUpdate(file.load());
 }
 
 /**
@@ -229,16 +227,6 @@ export function currentSpaceLoad() {
  */
 export function currentDatasetLoad() {
   return (dispatch, getStore) => {
-    return getStore().spaces.currentDataset().load()
-      .then((payload) => {
-        console.log('got here!');
-        dispatch({ type: DATASET_LOAD, payload });
-      })
-      .then(() => Spaces.dispatchLoad(Annotation.load(getStore().spaces.currentDataset())))
-      .catch((error) => {
-        if (error !== 'Empty result set') {
-          return dispatchError(error, dispatch, DATASET_LOAD);
-        }
-      });
+    return _datasetLoad(getStore().spaces.currentDataset(), dispatch, getStore);
   };
 }

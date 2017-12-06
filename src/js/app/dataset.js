@@ -1,13 +1,8 @@
-import { getFiles, getDataset, postDataset, patchDataset } from '../api/datasets';
-import { getAllAnnotations } from '../api/annotations';
-import { props, isArchiveFile, isZipArchive, isTarArchive, gunzipIfNeeded, StrStream, pushTo, hackParent } from '../utils/apputils';
-import JSZip from 'jszip';
-import { extract } from 'tar-stream';
+import { getDataset, postDataset, patchDataset } from '../api/datasets';
+import { props, isArchiveFile, pushTo, hackParent } from '../utils/apputils';
 import { Index } from 'diag-search/src/js/search';
 import Spaces from './spaces';
 import Space from './space';
-import File from './file';
-import Annotation from './annotation';
 
 /** Dataset containing files and activity */
 export default class Dataset {
@@ -56,13 +51,13 @@ export default class Dataset {
    * @param {string} fid - File ID
    * @returns {File}
   */
-  file(fid) { return this._files[fid]; }
+  file(fid) { return Spaces.store().file(this.space().itemid(), this.itemid(), fid); }
 
   /**
    * All files
    * @returns {File[]}
    */
-  files() { return Object.values(this._files); }
+  files() { return Spaces.store().files(this.id); }
 
   /**
    * Activity
@@ -143,103 +138,6 @@ export default class Dataset {
     }
   }
 
-  /* eslint prefer-template: off */
-  /* eslint class-methods-use-this: off */
-  _expandArchive(f, toAdd, toRemove) {
-    if (!isArchiveFile(f.name)) {
-      return Promise.resolve('regular-file');
-    }
-
-    const addFileFromArchive = (name, bytes, size) => {
-      const nf = f.copy();
-      nf.id = Object.assign({}, f.id);
-      nf.setRawContent(bytes);
-      nf.id.item_id += ':' + toAdd.length;
-      nf.name = f.name + '/' + name;
-      nf.size = size;
-      toAdd.push(nf);
-    };
-
-    if (isZipArchive(f.name)) {
-      toRemove.push(f);
-      return new Promise((resolve, reject) => {
-        console.log(`processing zip archive, file=${f.name} ... `);
-        JSZip.loadAsync(f.rawContent())
-          .catch((err) => {
-            reject(err);
-          })
-          .then((zip) => {
-            const promises = [];
-            zip.forEach((path, zipFile) => {
-              if (zipFile.dir) {
-                return; // nop
-              }
-              console.log(`${Date.now()} - start zipentry=${zipFile.name}...`);
-              promises.push(
-                zipFile.async('uint8array')
-                  .catch((err) => {
-                    reject(err);
-                  })
-                  .then((u8) => {
-                    addFileFromArchive(zipFile.name, u8.buffer, u8.byteLength);
-                    console.log(`${Date.now()} - end zip entry=${zipFile.name}, size=${u8.byteLength} ...`);
-                  })
-              );
-            });
-            Promise.all(promises)
-              .then(() => {
-                resolve('zip-archive-file-done');
-              });
-          });
-      });
-    }
-
-    if (isTarArchive(f.name)) {
-      toRemove.push(f);
-      return new Promise((resolve, reject) => {
-        const ext = extract();
-        ext.on('entry', (header, stream, next) => {
-          console.log(`${Date.now()} - start tar entry=${header.name}...`);
-          const bytes = new ArrayBuffer(header.size);
-          const content = new Uint8Array(bytes);
-          let len = 0;
-          stream.on('end', () => {
-            if (header.size > 0 && header.type !== 'directory') {
-              addFileFromArchive(header.name, bytes, header.size);
-            }
-            console.log(`${Date.now()} - end tar entry=${header.name}, size=${header.size} ...`);
-            next(); // ready for next entry
-          });
-
-          stream.resume()
-            .on('data', (d) => {
-              content.set(d, len);
-              len += d.byteLength;
-            });
-        });
-
-        // all entries read
-        ext.on('finish', () => {
-          resolve('tar-archive-file-done');
-        });
-
-        ext.on('error', (err) => {
-          reject(err);
-        });
-
-
-        // NOTE: raw content will be decompressed already, due to content-encoding being set to gzip
-        // however in some cases/browsers depending on content-type the contents might NOT be decompressed
-        gunzipIfNeeded(f.name, f.rawContent(), (err, buf) => {
-          const s = new StrStream(buf);
-          s.pipe(ext);
-        });
-      });
-    }
-
-    return Promise.reject(`unsupported archive file=${f.name}, likely a bug`);
-  }
-
   _updateFiles(toAdd, toRemove) {
     // remove/add files
     for (let i = 0; i < toAdd.length; ++i) {
@@ -255,78 +153,21 @@ export default class Dataset {
   }
 
   /**
-   * Fetch a dataset from the API
-   * @returns {Promise<Dataset>}
+   * Indexes files currently loaded in the dataset
    */
-  load() {
+  index() {
     const ret = this.copy();
-    return getFiles(this.space().itemid(), this.itemid())
-      .then(payload => (
-        payload.items.map(f => new File(ret, f)).reduce((files, f) => {
-          // see if we can reuse the content from the current file
-          // TODO: consider potential cache size bloat
-          const cf = this.file(f.itemid());
-          if (cf) {
-            f.setRawContent(cf.rawContent());
-          }
-          files[f.itemid()] = f;
-          return files;
-        }, {})
-      ))
-      .then((files) => {
-        ret._files = files;
-      })
-      .then(() => {
-        // download and index files in the DS
-        // TODO; move this to a bg task
-        const startTime = Date.now();
-        console.log(`${startTime} - download & index start`);
-        const downloads = [];
-        ret._initIndex();
-
-        const filesToAdd = [];
-        const filesToRemove = [];
-        ret.files().forEach((f) => {
-          downloads.push(
-            f.load()
-              .then((newf) => {
-                console.log(`${Date.now()} - downloaded file=${f.name}`);
-                f.setRawContent(newf.rawContent()); // copy content from newF
-                return this._expandArchive(newf, filesToAdd, filesToRemove);
-              }).catch((err) => {
-                console.error(`Failed to load contents of dataset=${ret.name}, file=${f.name}, err=${err}`);
-              })
-          );
-        });
-        return Promise.all(downloads)
-          .then(() => {
-            // remove/add files
-            ret._updateFiles(filesToAdd, filesToRemove);
-
-            // index the files
-            ret.resetIndex(); // reset index in case we're reloading
-            ret.files().forEach((f) => {
-              ret.addFileToIndex(f);
-            });
-          })
-          .then(() => {
-            const endTime = Date.now();
-            console.log(`${endTime} - download & index done in ${endTime - startTime} ms`);
-          })
-          .then(() => (Promise.resolve(ret)));
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-    // return getFiles(this.space().itemid(), this.itemid())
-    //   .then(payload => (
-    //     checkEmpty(payload, () => {
-    //       const ret = this.copy();
-    //       ret._files = payload.items.map(f => new File(ret, f)).reduce((files, f) => { files[f.itemid()] = f; return files; }, {});
-    //       return ret;
-    //       // return new Promise(resolve => resolve(ret));
-    //     })
-    //   ));
+    const startTime = Date.now();
+    console.log(`${startTime} - index start`);
+    ret._initIndex();
+    // index the files
+    ret.resetIndex(); // reset index in case we're reloading
+    ret.files().forEach((f) => {
+      ret.addFileToIndex(f);
+    });
+    const endTime = Date.now();
+    console.log(`${endTime} - index done in ${endTime - startTime} ms`);
+    return Promise.resolve(ret);
   }
 
   /**

@@ -111,6 +111,13 @@ export default class Base {
   }
 
   /**
+   * Annotations
+   */
+  annotations() {
+    return this._store().annotations(this.id);
+  }
+
+  /**
    * Inserts this item into a copy of its parent
    * @returns {Diag}
    */
@@ -172,24 +179,37 @@ export default class Base {
     return ret;
   }
 
-  static _getFilterFunc(id) {
+  /* eslint no-lonely-if: off */
+  static _getFilterFunc(id, type = 'list') {
     let fFunc;
     if (id) {
       if ('file_id' in id) { // We're something below a file
         fFunc = (item) => (item.id.item_id === id.item_id && item.id.file_id === id.file_id && item.id.dataset_id === id.dataset_id && item.id.space_id === id.space_id);
       } else if ('dataset_id' in id) { // We're a file
-        fFunc = (item) => (item.id.file_id === id.item_id && item.id.dataset_id === id.dataset_id && item.id.space_id === id.space_id);
+        if (type === 'get') {
+          fFunc = (item) => (item.id.item_id === id.item_id && item.id.dataset_id === id.dataset_id && item.id.space_id === id.space_id);
+        } else {
+          fFunc = (item) => (item.id.file_id === id.item_id && item.id.dataset_id === id.dataset_id && item.id.space_id === id.space_id);
+        }
       } else if ('space_id' in id) { // We're a dataset
-        fFunc = (item) => (item.id.dataset_id === id.item_id && item.id.space_id === id.space_id);
+        if (type === 'get') {
+          fFunc = (item) => (item.id.item_id === id.item_id && item.id.space_id === id.space_id);
+        } else {
+          fFunc = (item) => (item.id.dataset_id === id.item_id && item.id.space_id === id.space_id);
+        }
       } else { // Nothing else in the id, we're filtering on space_id
-        fFunc = (item) => item.id.space_id === id.item_id;
+        if (type === 'get') {
+          fFunc = (item) => item.id.item_id === id.item_id;
+        } else {
+          fFunc = (item) => item.id.space_id === id.item_id;
+        }
       }
     }
     return fFunc;
   }
 
   /**
-   * Retrieves an item from the store based on the passed id
+   * Retrieves an array of items from the store based on the passed id
    * @param {object} id - ID to retrieve
    * @returns {object[]}
    */
@@ -199,12 +219,12 @@ export default class Base {
   }
 
   /**
-   *
+   * Retreives an array of items from the store based on the passed id and class
    * @param {object} klass - Class to retrieve store for
    * @param {object} store - Parent datastore object
    * @param {object} id - ID to filter by
+   * @returns {object[]}
    */
-
   static storeListByClass(klass, store, id) {
     const fFunc = Base._getFilterFunc(id);
     return Base.getSelfs(klass, store).filter(fFunc);
@@ -216,7 +236,17 @@ export default class Base {
    * @returns {object}
    */
   storeGet(id) {
-    const fFunc = Base._getFilterFunc(id);
+    const fFunc = Base._getFilterFunc(id, 'get');
     return this._getSelfs().find(fFunc);
+  }
+
+  /**
+   * Retrieves the first item from the store based on the passed id and class
+   * @param {object} id - ID to retrieve
+   * @returns {object}
+   */
+  static storeGetByClass(klass, store, id) {
+    const fFunc = Base._getFilterFunc(id, 'get');
+    return Base.getSelfs(klass, store).find(fFunc);
   }
 }

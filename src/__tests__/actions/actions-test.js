@@ -245,81 +245,15 @@ describe('Redux Datasets', () => {
 
       interimState = interimState.update(spaceLoadAction.payload);
     });
-  });
 
-  describe('Redux Files', () => {
-    beforeEach(() => {
-      store.clearActions();
+    it('should handle datasetUpdate', () => {
+      expect(reducer(interimState, datasetUpdateAction))
+        .toEqual(interimState.updateDataset(datasetUpdateAction.payload));
     });
 
-    describe('actions', () => {
-      it('fileCreate errors', () => {
-        const name = '0'.repeat(128);
-        return store.dispatch(fileCreate(dataset, name, 'foo', 'text/plain', 3, 'foo'))
-          .catch(() => {
-          })
-          .then(() => {
-            const actions = store.getActions();
-            expect(actions).toHaveLength(1);
-            expect(actions[0].type).toBe(FILE_CREATE);
-            expect(actions[0].error).toBeTruthy();
-            expect(actions[0].status).toBe(400);
-            fileCreateErrorAction = actions[0];
-          });
-      });
-
-      it('fileCreate inserts a new file', () => (
-        store.dispatch(fileCreate(dataset, tu.file1orig.name, tu.file1orig.description, tu.file1orig.contentType, tu.file1orig.content.length, tu.file1orig.content))
-          .then(() => {
-            const actions = store.getActions();
-            // Now includes activity
-            expect(actions).toHaveLength(2);
-            expect(actions[0].type).toBe(FILE_CREATE);
-            expect(actions[0].payload).toBeInstanceOf(File);
-            expect(actions[0].payload.content()).toBe(tu.file1content);
-            fileCreateAction = actions[0];
-            file = fileCreateAction.payload;
-          })
-      ));
-
-      it('datasetLoad reloads the dataset', () => (
-        store.dispatch(datasetLoad(dataset))
-          .then(() => {
-            const actions = store.getActions();
-            expect(actions).toHaveLength(1);
-            expect(actions[0].type).toBe(DATASET_LOAD);
-            expect(actions[0].payload).toBeInstanceOf(Dataset);
-            expect(actions[0].payload.file(file.itemid()).name).toBe(file.name);
-            datasetLoadAction = actions[0];
-            dataset = datasetLoadAction.payload;
-          })
-      ));
-    });
-
-    describe('reducer', () => {
-      it('should handle the fileCreate error', () => {
-        expect(reducer(interimState, fileCreateErrorAction))
-          .toEqual({
-            error: fileCreateErrorAction.error,
-            status: fileCreateErrorAction.status,
-            ...interimState,
-          });
-      });
-
-      it('should handle datasetCreate', () => {
-        expect(reducer(interimState, datasetCreateAction))
-          .toEqual(interimState.insertDataset(datasetCreateAction.payload));
-      });
-
-      it('should handle datasetUpdate', () => {
-        expect(reducer(interimState, datasetUpdateAction))
-          .toEqual(interimState.updateDataset(datasetUpdateAction.payload));
-      });
-
-      it('should handle datasetLoad', () => {
-        expect(reducer(interimState, datasetLoadAction))
-          .toEqual(interimState.updateDataset(datasetLoadAction.payload));
-      });
+    it('should handle datasetLoad', () => {
+      expect(reducer(interimState, datasetLoadAction))
+        .toEqual(interimState.updateDataset(datasetLoadAction.payload));
     });
   });
 

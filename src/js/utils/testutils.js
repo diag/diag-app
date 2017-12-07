@@ -20,17 +20,12 @@ export function testSetup(testName, TID) {
   let appWait;
   if (!('SKIP_SERVER' in process.env)) {
     app = require('gdi-http/src/server');
-    appWait = new Promise(resolve => {
-      app.app.on('ready', () => {
-        console.log('api server ready ...');
-        resolve();
-      });
-    });
+    appWait = app.app.promise
+      .then(() => { console.log('api server ready ... shoot!') });
   } else {
     appWait = Promise.resolve();
   }
   const owner = `user@${TID}`;
-  // const spaceId = `space${TID}`;
   const options = { headers: headers() };
 
   console.log('Starting backend test, TID: ', TID);

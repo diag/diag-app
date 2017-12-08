@@ -44,17 +44,16 @@ export default class Space extends Base {
    * Saves space to the API
    * @param {string} id - Space ID to create
    * @param {string} name - Space name
-   * @param {function} store - Function which returns the store
    * @returns {Promise<Space>}
    */
-  static create(id, name, store) {
+  static create(id, name) {
     if (id === undefined) {
       return Promise.reject('id undefined');
     }
     return postSpace(id, name)
       .then((payload) => {
         if (payload.count > 0) {
-          return Promise.resolve(new Space(payload.items[0], store));
+          return Promise.resolve(new Space(payload.items[0]));
         }
         return Promise.reject('Empty result set');
       });

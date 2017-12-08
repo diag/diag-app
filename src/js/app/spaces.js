@@ -18,6 +18,7 @@ export default class Spaces {
   constructor() {
     this._currentSpaceId = undefined;
     this._currentDatasetId = undefined;
+    this.version = 0;
   }
 
   /**
@@ -62,7 +63,11 @@ export default class Spaces {
    * */
   space(sid) {
     const id = { item_id: sid };
-    return Space.storeGetByClass(Space, this, id);
+    let ret = Space.storeGetByClass(Space, this, id);
+    if (!ret) {
+      ret = new Space();
+    }
+    return ret;
   }
 
   /**
@@ -73,7 +78,11 @@ export default class Spaces {
    */
   dataset(sid, did) {
     const id = { space_id: sid, item_id: did };
-    return Dataset.storeGetByClass(Dataset, this, id);
+    let ret = Dataset.storeGetByClass(Dataset, this, id);
+    if (!ret) {
+      ret = new Dataset();
+    }
+    return ret;
   }
 
   /**
@@ -82,7 +91,10 @@ export default class Spaces {
    * @returns {Dataset[]}
    */
   datasets(sid) {
-    const id = { space_id: sid };
+    let id;
+    if (sid) {
+      id = { space_id: sid };
+    }
     return Dataset.storeListByClass(Dataset, this, id);
   }
 
@@ -94,7 +106,11 @@ export default class Spaces {
    */
   file(sid, did, fid) {
     const id = { space_id: sid, dataset_id: did, item_id: fid };
-    return File.storeGetByClass(File, this, id);
+    let ret = File.storeGetByClass(File, this, id);
+    if (!ret) {
+      ret = new File();
+    }
+    return ret;
   }
 
   /**
@@ -163,61 +179,6 @@ export default class Spaces {
   }
 
   /**
-   * Sets current space to space
-   * @param {(Space|number)} space - Can be space object or space ID
-   */
-  setCurrentSpace(space) {
-    let currentSpaceId;
-    if (space instanceof Space) {
-      currentSpaceId = space.space().itemid();
-    } else {
-      currentSpaceId = space;
-    }
-    if (this.space(currentSpaceId).itemid() === undefined) {
-      return Space.load(currentSpaceId)
-        .then((payload) => {
-          payload._currentSpaceId = currentSpaceId;
-          return Promise.resolve(payload);
-        });
-    }
-    const ret = this.copy();
-    ret._currentSpaceId = currentSpaceId;
-    ret._currentDatasetId = undefined;
-    return new Promise(resolve => resolve(ret));
-  }
-
-  /**
-   * Sets the current dataset to dataset
-   * @param {(Dataset|number)} dataset - Can be dataset object or dataset ID
-   */
-  setCurrentDataset(dataset) {
-    let currentDatasetId;
-    let currentSpaceId;
-    if (dataset instanceof Dataset) {
-      currentDatasetId = dataset.itemid();
-      currentSpaceId = dataset.space().itemid();
-    } else {
-      currentDatasetId = dataset;
-      currentSpaceId = this._currentSpaceId;
-    }
-    if (this.dataset(currentSpaceId, currentDatasetId).itemid() === undefined) {
-      if (this.space(currentSpaceId).itemid() === undefined) {
-        return Promise.reject(`invalid current space ${currentSpaceId}`);
-      }
-      return Dataset.load(this.space(currentSpaceId), currentDatasetId)
-        .then((payload) => {
-          payload._currentSpaceId = currentSpaceId;
-          payload._currentDatasetId = currentDatasetId;
-          return Promise.resolve(payload);
-        });
-    }
-    const ret = this.copy();
-    ret._currentSpaceId = currentSpaceId;
-    ret._currentDatasetId = currentDatasetId;
-    return new Promise(resolve => resolve(ret));
-  }
-
-  /**
    * Dispatches a create change to state
    * @param {Promise<object>} promise - Unresolved promise with a payload to dispatch
    * @returns {Promise<object} - Returns promise payload as an unresolved promise
@@ -266,7 +227,7 @@ export default class Spaces {
     return promise
       .then((payload) => {
         _dispatch({ type: action, payload });
-        return Promise.resolve(action.payload);
+        return Promise.resolve(payload);
       })
       .catch(error => {
         return dispatchError(error, _dispatch, action);
@@ -293,18 +254,25 @@ export default class Spaces {
     }
     switch (action.type) {
     case 'DIAG_CREATE':
-      return Object.assign(ret, state, action.payload.storeInsert());
+      Object.assign(ret, state, action.payload.storeInsert());
+      break;
     case 'DIAG_UPDATE':
-      return Object.assign(ret, state, action.payload.storeUpdate());
+      Object.assign(ret, state, action.payload.storeUpdate());
+      break;
     case 'DIAG_DELETE':
-      return Object.assign(ret, state, action.payload.storeDelete());
+      Object.assign(ret, state, action.payload.storeDelete());
+      break;
     case 'DIAG_LOAD':
       if (Array.isArray(action.payload) && action.payload.length === 0) {
         return state;
       }
-      return Object.assign(ret, state, action.payload[0].storeLoad(action.payload));
+      Object.assign(ret, state, action.payload[0].storeLoad(action.payload));
+      break;
     default:
-      return Object.assign(ret, state, { error: 'invalid action' });
+      Object.assign(ret, state, { error: 'invalid action' });
+      break;
     }
+    ret.version = state.version + 1;
+    return ret;
   }
 }

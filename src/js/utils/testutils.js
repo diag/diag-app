@@ -72,6 +72,7 @@ export function testData() {
     TID,
     spaceId: `space${TID}`,
     space2Id: `space2${TID}`,
+    space3Id: `space3${TID}`,
     spaceName: `spacename${TID}`,
     space2Name: `space2name${TID}`,
     owner: `user@${TID}`,

@@ -119,7 +119,7 @@ describe('App Files', () => {
 
   it('does not have file2', () => {
     const f2 = td.dataset2().file(td.file2Id);
-    expect(f2).not.toBeTruthy();
+    expect(f2.itemid()).not.toBeTruthy();
   });
 
   it('can go up and back down', () => {

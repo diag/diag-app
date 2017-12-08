@@ -1,4 +1,4 @@
-import { getDataset, postDataset, patchDataset } from '../api/datasets';
+import { getDataset, getDatasets, postDataset, patchDataset } from '../api/datasets';
 import { checkEmpty } from '../utils/apputils';
 import { Index } from 'diag-search/src/js/search';
 import Spaces from './spaces';
@@ -89,11 +89,17 @@ export default class Dataset extends Base {
   /**
    * Fetches a dataset from the API by id
    * @param {Space} space - Space to load dataset into
-   * @param {string} datasetId - ID of the dataset to retrieve from the API
+   * @param {(string)} datasetId - ID of the dataset to retrieve from the API (optional)
    * @returns {Promise<dataset>}
    */
   static load(spaceId, datasetId) {
-    return getDataset(spaceId, datasetId)
+    let dsPromise;
+    if (datasetId === undefined) {
+      dsPromise = getDatasets(spaceId);
+    } else {
+      dsPromise = getDataset(spaceId, datasetId)
+    }
+    return dsPromise
       .then(payload => (
         checkEmpty(payload, () => (
           payload.items.map(i => new Dataset(i))
@@ -112,7 +118,6 @@ export default class Dataset extends Base {
    * @returns {Promise<Dataset>}
    */
   static create(space, name, description, tags, problem, resolution) {
-    debugger;
     if (space === undefined) {
       return Promise.reject('space undefined');
     }

@@ -149,13 +149,13 @@ describe('Redux Spaces', () => {
         })
     ));
     it('spaceCreate inserts a new space', () => (
-      Spaces.dispatchCreate(Space.create('somespace'))
+      Spaces.dispatchCreate(Space.create(td.space3Id))
         .then(() => {
           const actions = td.store.getActions();
           expect(actions).toHaveLength(1);
           expect(actions[0].type).toBe(DIAG_CREATE);
           expect(actions[0].payload).toBeInstanceOf(Space);
-          expect(actions[0].payload.itemid()).toBe('somespace');
+          expect(actions[0].payload.itemid()).toBe(td.space3Id);
           td.spaceCreateAction = actions[0];
           td.rspace = td.spaceCreateAction.payload;
         })
@@ -169,7 +169,8 @@ describe('Redux Spaces', () => {
           expect(actions).toHaveLength(1);
           expect(actions[0].type).toBe(DIAG_UPDATE);
           expect(actions[0].payload).toBeInstanceOf(Space);
-          expect(actions[0].payload.itemid()).toBe('somespace');
+          expect(actions[0].payload.itemid()).toBe(td.space3Id);
+          expect(actions[0].payload.name).toBe(s.name);
           td.spaceUpdateAction = actions[0];
           td.rspace = td.spaceUpdateAction.payload;
         });
@@ -196,7 +197,6 @@ describe('Redux Spaces', () => {
         .toEqual({
           error: td.spaceCreateErrorAction.error,
           status: td.spaceCreateErrorAction.status,
-          ...new Spaces(undefined),
         });
     });
 

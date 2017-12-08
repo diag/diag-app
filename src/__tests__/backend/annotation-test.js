@@ -3,6 +3,8 @@ import { Spaces, Space, Dataset, File, Annotation } from '../../js/app';
 import fetch from 'node-fetch';
 import { polyfill as promisePolyfill } from 'es6-promise';
 
+import isEqual from 'lodash/fp/isEqual';
+
 // Redux
 import reducer from '../../js/reducers/spaces';
 import configureMockStore from 'redux-mock-store';
@@ -199,7 +201,7 @@ describe('App Annotations', () => {
         Annotation.load(td.dataset())
       ))
       .then((payload) => {
-        expect(payload).toHaveLength(0);
+        expect(payload.filter(a => isEqual(a.id, td.annot.id))).toHaveLength(0);
       });
   });
 });

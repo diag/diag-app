@@ -76,7 +76,10 @@ export default class Base {
    * @returns {Space}
    */
   space() {
-    const spaceId = this.id.space_id ? this.id.space_id : this.id.item_id;
+    let spaceId;
+    if (this.id) {
+      spaceId = this.id.space_id ? this.id.space_id : this.id.item_id;
+    }
     if (!spaceId) {
       return undefined;
     }
@@ -106,9 +109,12 @@ export default class Base {
    * Child datasets
    */
   datasets() {
+    if (!this.id) {
+      return [];
+    }
     const spaceId = this.id.space_id ? this.id.space_id : this.id.item_id;
     if (!spaceId) {
-      return undefined;
+      return [];
     }
     return this._store().datasets(spaceId);
   }
@@ -184,7 +190,14 @@ export default class Base {
    */
   storeLoad(objs) {
     const ret = this._store().copy();
-    ret[this._getKey()] = objs;
+    if (objs) {
+      let selfs = this._getSelfs();
+      if (!Array.isArray(objs)) {
+        return ret[this._getKey()] = [...selfs];
+      }
+      selfs = selfs.filter(s => objs.findIndex(o => isEqual(o.id, s.id)) === -1);
+      ret[this._getKey()] = [...selfs, ...objs];
+    }
     return ret;
   }
 
@@ -247,6 +260,8 @@ export default class Base {
           fFunc = (item) => item.id.space_id === id.item_id;
         }
       }
+    } else {
+      fFunc = () => true;
     }
     return fFunc;
   }

@@ -1,5 +1,5 @@
 import {
-  getFileContent, uploadFile, getFiles,
+  getFileContent, uploadFile, getFiles, patchFile,
 } from '../api/datasets';
 import { props, isArchiveFile, gunzipIfNeeded, isZipArchive, isTarArchive, StrStream } from '../utils/apputils';
 import { extract } from 'tar-stream';
@@ -330,5 +330,23 @@ export default class File extends Base {
     }
 
     return Promise.reject(`unsupported archive file=${f.name}, likely a bug`);
+  }
+
+  /**
+   * Updates file with the API
+   * @returns {Promise<File>}
+   */
+  update() {
+    // update dataset itself
+    return patchFile(this, { parse: this.parse })
+      .then((payload) => {
+        if (payload.count > 0) {
+          // HACK shouldn't mutate existing state, but this saves us from having to reload the whole dataset from the server
+          const ret = this.copy();
+          Object.assign(ret, payload.items[0]);
+          return Promise.resolve(ret);
+        }
+        return Promise.reject('Empty result set');
+      });
   }
 }

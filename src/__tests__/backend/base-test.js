@@ -184,6 +184,7 @@ describe('Base properties', () => {
   });
 
   it('handles empty lists fine', () => {
+    updateStore(new Spaces({}));
     updateStore(t.storeLoad([]));
     expect(t.storeList({ item_id: 'foo2' })).toHaveLength(0);
     expect(t.storeGet({ item_id: 'foo2' })).toBeUndefined();

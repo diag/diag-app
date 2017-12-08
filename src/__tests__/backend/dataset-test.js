@@ -94,7 +94,7 @@ describe('App Datasets', () => {
     it('cant access dataset2', () => {
       // We haven't reduced yet, so shouldn't be in the datamodel
       const ds2 = td.space().dataset(td.dataset2Id);
-      expect(ds2).not.toBeTruthy();
+      expect(ds2.itemid()).not.toBeTruthy();
     });
 
     it('copy should be a copy', () => {

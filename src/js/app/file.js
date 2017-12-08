@@ -119,6 +119,10 @@ export default class File extends Base {
               f.setRawContent(buf);
               dataset.addFileToIndex(f);
               resolve(f);
+            } else if (content.constructor.name === 'ArrayBuffer' || content instanceof ArrayBuffer) {
+              f.setRawContent(content);
+              dataset.addFileToIndex(f);
+              resolve(f);
             } else if (content.constructor.name === 'File' || content instanceof File) {
               const fr = new FileReader();
               fr.onloadend = (evt) => {

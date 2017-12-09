@@ -1,5 +1,4 @@
 import { getAllSpaces } from '../api/datasets';
-import { dispatchError } from '../utils/uiutils';
 import Space from './space';
 import Dataset from './dataset';
 import File from './file';
@@ -229,9 +228,6 @@ export default class Spaces {
         _dispatch({ type: action, payload });
         return Promise.resolve(payload);
       })
-      .catch(error => {
-        return dispatchError(error, _dispatch, action);
-      });
   }
 
   /**
@@ -240,15 +236,19 @@ export default class Spaces {
    * @param {object} action - Action to execute to mutate state
    * @returns {object} - Returns mutated state
    */
-  static reduce(state, action) {
+  static reduce(state = new Spaces(), action) {
     if (!action || !(action.payload || action.error)) return state;
+    if (action.type !== 'DIAG_CREATE' && action.type !== 'DIAG_UPDATE'
+        && action.type !== 'DIAG_DELETE' && action.type !== 'DIAG_LOAD' && action.type !== 'DIAG_ERROR') {
+      return state;
+    }
     let ret;
     if (state.constuctor) {
       ret = Object.create(state.constructor.prototype);
     } else {
       ret = Object.create(state);
     }
-    if (action.error) {
+    if (action.error || action.type === 'DIAG_ERROR') {
       Object.assign(ret, state, { error: action.error, status: action.status });
       return ret;
     }
@@ -269,7 +269,6 @@ export default class Spaces {
       Object.assign(ret, state, action.payload[0].storeLoad(action.payload));
       break;
     default:
-      Object.assign(ret, state, { error: 'invalid action' });
       break;
     }
     ret.version = state.version + 1;

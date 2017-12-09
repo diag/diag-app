@@ -4,7 +4,6 @@ import fetch from 'node-fetch';
 import { polyfill as promisePolyfill } from 'es6-promise';
 
 // Redux
-import reducer from '../../js/reducers/spaces';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { DIAG_CREATE, DIAG_LOAD, DIAG_UPDATE } from '../../js/actions';
@@ -268,21 +267,6 @@ describe('Redux Datasets', () => {
   });
 
   describe('actions', () => {
-    it('datasetCreate errors', () => {
-      const name = '0'.repeat(100);
-      return Spaces.dispatchCreate(Dataset.create(td.space(), name, 'foo', undefined))
-        .catch(() => {
-        })
-        .then(() => {
-          const actions = td.store.getActions();
-          expect(actions).toHaveLength(1);
-          expect(actions[0].type).toBe(DIAG_CREATE);
-          expect(actions[0].error).toBeTruthy();
-          expect(actions[0].status).toBe(400);
-          td.datasetCreateErrorAction = actions[0];
-        });
-    });
-
     it('datasetCreate inserts a new dataset', () => (
       Spaces.dispatchCreate(Dataset.create(td.space(), tu.dataset1orig.name, tu.dataset1orig.description, tu.dataset1orig.tags, tu.dataset1orig.problem, tu.dataset1orig.resolution))
         .then(() => {
@@ -327,104 +311,5 @@ describe('Redux Datasets', () => {
         })
     ));
   });
-
-  describe('reducer', () => {
-    it('should handle the datasetCreate error', () => {
-      expect(reducer(td.interimState, td.datasetCreateErrorAction))
-        .toEqual({
-          error: td.datasetCreateErrorAction.error,
-          status: td.datasetCreateErrorAction.status,
-          ...td.interimState,
-        });
-    });
-
-    it('should handle datasetCreate', () => {
-      expect(reducer(td.interimState, td.datasetCreateAction))
-        .toEqual(Spaces.reduce(td.interimState, td.datasetCreateAction));
-    });
-
-    it('should handle datasetLoad', () => {
-      expect(reducer(td.interimState, td.datasetLoadAction))
-        .toEqual(Spaces.reduce(td.interimState, td.datasetLoadAction));
-    });
-
-    it('should handle datasetUpdate', () => {
-      expect(reducer(td.interimState, td.datasetUpdateAction))
-        .toEqual(Spaces.reduce(td.interimState, td.datasetUpdateAction));
-    });
-  });
-
-  // describe('Redux Spaces, current Space & Dataset', () => {
-  //   beforeEach(() => {
-  //     store.clearActions();
-  //   });
-  //   describe('actions', () => {
-  //     it('setCurrentSpace errors', () => {
-  //       store.dispatch(setCurrentSpace('foo'))
-  //         .catch((err) => {
-  //           expect(err.status).toBe(404);
-  //         });
-  //     });
-  //     it('setCurrentSpace dispatches', () => {
-  //       store.dispatch(setCurrentSpace(space))
-  //         .then(() => {
-  //           const actions = store.getActions();
-  //           expect(actions).toHaveLength(1);
-  //           expect(actions[0].type).toBe(SPACE_SET);
-  //           expect(actions[0].payload).toBe(space.itemid());
-  //           setCurrentSpaceAction = actions[0];
-  //         });
-  //     });
-
-  //     it('setCurrentDataset errors', () => {
-  //       store.dispatch(setCurrentDataset('foo'))
-  //         .catch((err) => {
-  //           expect(err).toMatch('invalid current space');
-  //         });
-  //     });
-
-  //     it('setCurrentDataset dispatches', () => {
-  //       store.dispatch(setCurrentDataset(dataset))
-  //         .then(() => {
-  //           expect(false).toBeTruthy();
-  //           const actions = store.getActions();
-  //           console.log(actions);
-  //           expect(actions).toHaveLength(2);
-  //           expect(actions[0].type).toBe(DATASET_SET);
-  //           expect(actions[0].payload).toBe(dataset.itemid());
-  //           setCurrentDatasetAction = actions[0];
-  //         });
-  //     });
-  //   });
-
-  //   describe('reducer', () => {
-  //     it('should handle the setCurrentSpace error', () => {
-  //       expect(reducer(interimState, setCurrentSpaceErrorAction))
-  //         .toEqual({
-  //           error: setCurrentSpaceErrorAction.error,
-  //           spaces: interimState.spaces,
-  //         });
-  //     });
-  //     it('should handle setCurrentSpace', () => {
-  //       expect(reducer(interimState, setCurrentSpaceAction))
-  //         .toEqual({
-  //           spaces: setCurrentSpaceAction.payload
-  //         });
-  //     });
-  //     it('should handle the setCurrentDataset error', () => {
-  //       expect(reducer(interimState, setCurrentDatasetErrorAction))
-  //         .toEqual({
-  //           error: setCurrentDatasetErrorAction.error,
-  //           spaces: interimState.spaces,
-  //         });
-  //     });
-  //     it('should handle setCurrentDataset', () => {
-  //       expect(reducer(interimState, setCurrentDatasetAction))
-  //         .toEqual({
-  //           spaces: setCurrentDatasetAction.payload
-  //         });
-  //     });
-  //   });
-  // });
 });
 

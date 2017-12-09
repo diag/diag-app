@@ -4,7 +4,6 @@ import fetch from 'node-fetch';
 import { polyfill as promisePolyfill } from 'es6-promise';
 
 // Redux
-import reducer from '../../js/reducers/spaces';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { DIAG_CREATE, DIAG_LOAD, DIAG_UPDATE } from '../../js/actions';
@@ -137,17 +136,6 @@ describe('Redux Spaces', () => {
   });
 
   describe('actions', () => {
-    it('spaceCreate errors', () => (
-      Spaces.dispatchCreate(Space.create('foo_bar'))
-        .catch(() => {
-          const actions = td.store.getActions();
-          expect(actions).toHaveLength(1);
-          expect(actions[0].type).toBe(DIAG_CREATE);
-          expect(actions[0].error).toBeTruthy();
-          expect(actions[0].status).toBe(400);
-          td.spaceCreateErrorAction = actions[0];
-        })
-    ));
     it('spaceCreate inserts a new space', () => (
       Spaces.dispatchCreate(Space.create(td.space3Id))
         .then(() => {
@@ -189,31 +177,6 @@ describe('Redux Spaces', () => {
           td.spacesInitAction = actions[0];
         })
     ));
-  });
-
-  describe('reducer', () => {
-    it('should handle spaceCreate error', () => {
-      expect(reducer(td.initialState, td.spaceCreateErrorAction))
-        .toEqual({
-          error: td.spaceCreateErrorAction.error,
-          status: td.spaceCreateErrorAction.status,
-        });
-    });
-
-    it('should handle spaceCreate', () => {
-      expect(reducer(td.initialState, td.spaceCreateAction))
-        .toEqual(Spaces.reduce(td.initialState, td.spaceCreateAction));
-    });
-
-    it('should handle spaceUpdate', () => {
-      expect(reducer(td.initialState, td.spaceUpdateAction))
-        .toEqual(Spaces.reduce(td.initialState, td.spaceUpdateAction));
-    });
-
-    it('should handle spacesLoad', () => {
-      expect(reducer(td.initialState, td.spacesInitAction))
-        .toEqual(Spaces.reduce(td.initialState, td.spacesInitAction));
-    });
   });
 });
 

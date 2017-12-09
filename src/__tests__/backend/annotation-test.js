@@ -6,7 +6,6 @@ import { polyfill as promisePolyfill } from 'es6-promise';
 import isEqual from 'lodash/fp/isEqual';
 
 // Redux
-import reducer from '../../js/reducers/spaces';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { DIAG_CREATE, DIAG_LOAD, DIAG_UPDATE, DIAG_DELETE } from '../../js/actions';
@@ -212,20 +211,6 @@ describe('Redux Annotations', () => {
   });
 
   describe('annotations', () => {
-    it('annotationCreate errors', () => (
-      Spaces.dispatchCreate(Annotation.create(td.file(), 'foo', -1, -1, 'foo'))
-        .catch(() => {
-        })
-        .then(() => {
-          const actions = td.store.getActions();
-          expect(actions).toHaveLength(1);
-          expect(actions[0].type).toBe(DIAG_CREATE);
-          expect(actions[0].error).toBeTruthy();
-          expect(actions[0].status).toBe(400);
-          td.annotationCreateErrorAction = actions[0];
-        })
-    ));
-
     it('annotationCreate inserts a new annotation', () => (
       Spaces.dispatchCreate(Annotation.create(td.file(), 'foo', 1, 2, 'ab'))
         .then(() => {
@@ -316,52 +301,5 @@ describe('Redux Annotations', () => {
           td.annotationDeleteAction = actions[0];
         })
     ));
-  });
-
-  describe('reducer', () => {
-    it('should handle the annotationCreate error', () => {
-      expect(reducer(td.interimState, td.annotationCreateErrorAction))
-        .toEqual({
-          error: td.annotationCreateErrorAction.error,
-          status: td.annotationCreateErrorAction.status,
-          ...td.interimState,
-        });
-    });
-
-    it('should handle annotationCreate', () => {
-      expect(reducer(td.interimState, td.annotationCreateAction))
-        .toEqual(Spaces.reduce(td.interimState, td.annotationCreateAction));
-    });
-
-
-    it('should handle annotationLoad', () => {
-      expect(reducer(td.interimState, td.annotationLoadAction))
-        .toEqual(Spaces.reduce(td.interimState, td.annotationLoadAction));
-    });
-
-    it('should handle annotationUpdate', () => {
-      expect(reducer(td.interimState, td.annotationUpdateAction))
-        .toEqual(Spaces.reduce(td.interimState, td.annotationUpdateAction));
-    });
-
-    it('should handle annotationCommentCreate', () => {
-      expect(reducer(td.interimState, td.annotationCommentCreateAction))
-        .toEqual(Spaces.reduce(td.interimState, td.annotationCommentCreateAction));
-    });
-
-    it('should handle annotationCommentUpdate', () => {
-      expect(reducer(td.interimState, td.annotationCommentUpdateAction))
-        .toEqual(Spaces.reduce(td.interimState, td.annotationCommentUpdateAction));
-    });
-
-    it('should handle annotationUpdate', () => {
-      expect(reducer(td.interimState, td.annotationCommentDeleteAction))
-        .toEqual(Spaces.reduce(td.interimState, td.annotationCommentDeleteAction));
-    });
-
-    it('should handle annotationDelete', () => {
-      expect(reducer(td.interimState, td.annotationDeleteAction))
-        .toEqual(Spaces.reduce(td.interimState, td.annotationDeleteAction));
-    });
   });
 });

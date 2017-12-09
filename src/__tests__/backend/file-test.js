@@ -1,13 +1,12 @@
 import * as tu from '../../js/utils/testutils';
-import { Spaces, Space, Dataset, File, Annotation } from '../../js/app';
+import { Spaces, Space, Dataset, File } from '../../js/app';
 import fetch from 'node-fetch';
 import { polyfill as promisePolyfill } from 'es6-promise';
 
 // Redux
-import reducer from '../../js/reducers/spaces';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import { DIAG_CREATE, DIAG_LOAD, DIAG_UPDATE, DIAG_DELETE } from '../../js/actions';
+import { DIAG_CREATE, DIAG_LOAD } from '../../js/actions';
 
 global.fetch = fetch;
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 15000;
@@ -169,21 +168,6 @@ describe('Redux Files', () => {
   });
 
   describe('actions', () => {
-    it('fileCreate errors', () => {
-      const name = '0'.repeat(128);
-      return Spaces.dispatchCreate(File.create(td.dataset(), name, 'foo', 'text/plain', 3, 'foo'))
-        .catch(() => {
-        })
-        .then(() => {
-          const actions = td.store.getActions();
-          expect(actions).toHaveLength(1);
-          expect(actions[0].type).toBe(DIAG_CREATE);
-          expect(actions[0].error).toBeTruthy();
-          expect(actions[0].status).toBe(400);
-          td.fileCreateErrorAction = actions[0];
-        });
-    });
-
     it('fileCreate inserts a new file', () => (
       Spaces.dispatchCreate(File.create(td.dataset(), td.f1orig.name, td.f1orig.description, td.f1orig.contentType, td.f1orig.content.length, td.f1orig.content))
         .then(() => {
@@ -209,26 +193,5 @@ describe('Redux Files', () => {
           td.file = td.fileLoadAction.payload;
         })
     ));
-  });
-
-  describe('reducer', () => {
-    it('should handle the fileCreate error', () => {
-      expect(reducer(td.interimState, td.fileCreateErrorAction))
-        .toEqual({
-          error: td.fileCreateErrorAction.error,
-          status: td.fileCreateErrorAction.status,
-          ...td.interimState,
-        });
-    });
-
-    it('should handle fileCreate', () => {
-      expect(reducer(td.interimState, td.fileCreateAction))
-        .toEqual(Spaces.reduce(td.interimState, td.fileCreateAction));
-    });
-
-    it('should handle fileLoad', () => {
-      expect(reducer(td.interimState, td.fileLoadAction))
-        .toEqual(Spaces.reduce(td.interimState, td.fileLoadAction));
-    });
   });
 });

@@ -1,26 +1,28 @@
 // Borrowed from https://github.com/krasimir/webpack-library-starter/blob/master/webpack.config.js
 
 const webpack = require('webpack');
+
 const UglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
 const path = require('path');
 const env = require('yargs').argv.env; // use --env with webpack 2
 
-let libraryName = 'library';
+const libraryName = 'diag-app';
 
-let plugins = [], outputFile;
+const plugins = [];
+let outputFile;
 
 if (env === 'build') {
   plugins.push(new UglifyJsPlugin({ minimize: true }));
-  outputFile = libraryName + '.min.js';
+  outputFile = `${libraryName}.min.js`;
 } else {
-  outputFile = libraryName + '.js';
+  outputFile = `${libraryName}.js`;
 }
 
 const config = {
-  entry: __dirname + '/src/index.js',
+  entry: `${__dirname}/src/js/app/index.js`,
   devtool: 'source-map',
   output: {
-    path: __dirname + '/lib',
+    path: `${__dirname}/lib`,
     filename: outputFile,
     library: libraryName,
     libraryTarget: 'umd',
@@ -28,6 +30,12 @@ const config = {
   },
   module: {
     rules: [
+      // Temporary hack until we convert diag-search to a module
+      {
+        // TODO: move this to diag-search
+        test: /diag-search\/src\/js/,
+        loader: 'babel-loader'
+      },
       {
         test: /(\.jsx|\.js)$/,
         loader: 'babel-loader',
@@ -44,7 +52,7 @@ const config = {
     modules: [path.resolve('./node_modules'), path.resolve('./src')],
     extensions: ['.json', '.js']
   },
-  plugins: plugins
+  plugins,
 };
 
 module.exports = config;

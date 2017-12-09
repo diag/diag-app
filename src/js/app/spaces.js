@@ -227,7 +227,7 @@ export default class Spaces {
       .then((payload) => {
         _dispatch({ type: action, payload });
         return Promise.resolve(payload);
-      })
+      });
   }
 
   /**

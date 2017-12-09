@@ -97,7 +97,7 @@ export default class Dataset extends Base {
     if (datasetId === undefined) {
       dsPromise = getDatasets(spaceId);
     } else {
-      dsPromise = getDataset(spaceId, datasetId)
+      dsPromise = getDataset(spaceId, datasetId);
     }
     return dsPromise
       .then(payload => (

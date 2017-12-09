@@ -11,6 +11,7 @@ import { TextEncoder, TextDecoder } from 'text-encoding';
 import isEqual from 'lodash/fp/isEqual';
 
 /* global FileReader */
+/* eslint consistent-return: off */
 
 /** File uploaded to API with activity and annotations */
 export default class File extends Base {

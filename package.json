@@ -2,9 +2,9 @@
   "name": "diag-app",
   "description": "Diag app library",
   "version": "0.0.1",
-  "main": "lib/app.js",
+  "main": "lib/diag-app.js",
   "scripts": {
-    "build": "webpack --env dev && webpack --env build && npm run test",
+    "build": "webpack --env dev && webpack --env build",
     "dev": "webpack --progress --colors --watch --env dev",
     "test": "API_HOST=http://localhost:3333 API_BASE=/api/v1 NODE_ENV=test node_modules/.bin/jest -i"
   },
@@ -37,6 +37,7 @@
     "es6-promise": "^4.0.5",
     "eslint": "^4.3.0",
     "eslint-config-airbnb": "^15.1.0",
+    "eslint-loader": "^1.9.0",
     "eslint-parallel": "^0.3.0",
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-jsx-a11y": "^5.1.1",

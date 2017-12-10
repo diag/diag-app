@@ -2,13 +2,14 @@ const crypto = require('crypto');
 
 const base62chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
+/* eslint no-restricted-syntax: off */
 // generates a random string in base62 [0-9a-zA-Z]
-exports.random = function (length) {
-  var randomBytes = crypto.randomBytes(length);
-  var result = '';
+exports.random = (length) => {
+  const randomBytes = crypto.randomBytes(length);
+  let result = '';
 
-  var cursor = 0;
-  for (let c of randomBytes) {
+  let cursor = 0;
+  for (const c of randomBytes) {
     cursor += c;
     result += base62chars[cursor % 62];
   }
@@ -16,8 +17,8 @@ exports.random = function (length) {
   return result;
 };
 
-exports.base62 = function (integer, width) {
-  var s = '';
+exports.base62 = (integer, width) => {
+  let s = '';
   while (integer > 0) {
     s = base62chars[integer % 62] + s;
     integer = Math.floor(integer / 62);
@@ -25,19 +26,18 @@ exports.base62 = function (integer, width) {
 
   width = width || 1;
   if (width > s.length) {
-    for (let i = width - s.length; i > 0; i--)
-      s = '0' + s;
+    for (let i = width - s.length; i > 0; i--) { s = `0${s}`; }
   }
   return s;
 };
 
-exports.base62decode = function (s) {
+/* eslint no-mixed-operators: off */
+exports.base62decode = (s) => {
   let r = 0;
 
-  for (let c of s) {
-    let i = base62chars.indexOf(c);
-    if (i < 0)
-      throw Error('Invalid base62 char=' + c)
+  for (const c of s) {
+    const i = base62chars.indexOf(c);
+    if (i < 0) { throw Error(`Invalid base62 char=${c}`); }
     r = r * base62chars.length + i;
   }
   return r;
@@ -52,14 +52,12 @@ exports.base62decode = function (s) {
 //  1 -> 11
 // 62 -> 210
 // 63 -> 211
-exports.lb62e = function (integer) {
-  let s = this.base62(integer)
-  if (s.length > 62)
-    throw Error("Integer out of range for LB62 encoding, value=" + integer);
+exports.lb62e = (integer) => {
+  const s = this.base62(integer);
+  if (s.length > 62) { throw Error(`Integer out of range for LB62 encoding, value=${integer}`); }
   return base62chars[s.length] + s;
-}
-exports.lb62d = function (s) {
-  if (s.length < 2 || this.base62decode(s[0]) !== s.length - 1)
-    throw Error("Invalid LB62 encoded string, value=" + s);
+};
+exports.lb62d = (s) => {
+  if (s.length < 2 || this.base62decode(s[0]) !== s.length - 1) { throw Error(`Invalid LB62 encoded string, value=${s}`); }
   return this.base62decode(s.substr(1));
-}
+};

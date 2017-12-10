@@ -19,7 +19,7 @@ if (env === 'build') {
 }
 
 const config = {
-  entry: `${__dirname}/src/js/app/index.js`,
+  entry: `${__dirname}/src/js/index.js`,
   devtool: 'source-map',
   node: { process: false },
   output: {

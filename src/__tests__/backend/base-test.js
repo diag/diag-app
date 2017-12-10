@@ -17,6 +17,13 @@ let u2;
 let u3;
 let s;
 
+class Test extends Base {
+  constructor(id) {
+    super(s._store);
+    this.id = id;
+  }
+}
+
 beforeAll(() => {
   const space = new Space({ id: { item_id: 'foo' } });
   const dataset = new Dataset({ id: { item_id: '10', space_id: 'foo' } });
@@ -29,13 +36,6 @@ beforeAll(() => {
   s._dataset = [dataset];
   s._file = [file];
   s._store = () => s;
-
-  class Test extends Base {
-    constructor(id) {
-      super(s._store);
-      this.id = id;
-    }
-  }
 
   t = new Test({ space_id: 'foo', dataset_id: '10', file_id: '10', item_id: '10' });
   t2 = new Test({ space_id: 'foo', dataset_id: '10', file_id: '10', item_id: '11' });

@@ -83,6 +83,7 @@ describe('App Annotations', () => {
       .then((payload) => {
         // Directly mutate state for tests
         td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_LOAD', payload });
+        debugger;
         expect(td.dataset().annotations().length).toBe(1);
       })
   ));

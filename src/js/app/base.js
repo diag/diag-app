@@ -28,11 +28,11 @@ export default class Base {
    * @returns {string}
    */
   static getKey(klass) {
-    return `_${klass.name.toLowerCase()}`;
+    return `_${klass.toLowerCase()}`;
   }
 
   _getKey() {
-    return Base.getKey(this.constructor);
+    return Base.getKey(this.constructor.name);
   }
 
   /**
@@ -282,14 +282,13 @@ export default class Base {
 
   /**
    * Retreives an array of items from the store based on the passed id and class
-   * @param {object} klass - Class to retrieve store for
    * @param {object} store - Parent datastore object
    * @param {object} id - ID to filter by
    * @returns {object[]}
    */
-  static storeListByClass(klass, store, id) {
+  static storeListByClass(store, id) {
     const fFunc = Base._getFilterFunc(id);
-    return Base.getSelfs(klass, store).filter(fFunc);
+    return Base.getSelfs(this.name, store).filter(fFunc);
   }
 
   /**
@@ -307,8 +306,8 @@ export default class Base {
    * @param {object} id - ID to retrieve
    * @returns {object}
    */
-  static storeGetByClass(klass, store, id) {
+  static storeGetByClass(store, id) {
     const fFunc = Base._getFilterFunc(id, 'get');
-    return Base.getSelfs(klass, store).find(fFunc);
+    return Base.getSelfs(this.name, store).find(fFunc);
   }
 }

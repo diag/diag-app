@@ -6,7 +6,6 @@ import File from './file';
 import Activity from './activity';
 import Annotation from './annotation';
 import User from './user';
-import Base from './base';
 
 let _store;
 let _dispatch;
@@ -97,7 +96,7 @@ export default class Spaces {
    * All spaces
    * @returns {Space[]}
    */
-  spaces() { return Base.storeListByClass(Space, this, {}); }
+  spaces() { return Space.storeListByClass(this, {}); }
 
   /**
    * Space to return
@@ -106,7 +105,7 @@ export default class Spaces {
    * */
   space(sid) {
     const id = { item_id: sid };
-    let ret = Space.storeGetByClass(Space, this, id);
+    let ret = Space.storeGetByClass(this, id);
     if (!ret) {
       ret = new Space();
     }
@@ -121,7 +120,7 @@ export default class Spaces {
    */
   dataset(sid, did) {
     const id = { space_id: sid, item_id: did };
-    let ret = Dataset.storeGetByClass(Dataset, this, id);
+    let ret = Dataset.storeGetByClass(this, id);
     if (!ret) {
       ret = new Dataset();
     }
@@ -138,7 +137,7 @@ export default class Spaces {
     if (sid) {
       id = { space_id: sid };
     }
-    return Dataset.storeListByClass(Dataset, this, id);
+    return Dataset.storeListByClass(this, id);
   }
 
   /**
@@ -149,7 +148,7 @@ export default class Spaces {
    */
   file(sid, did, fid) {
     const id = { space_id: sid, dataset_id: did, item_id: fid };
-    let ret = File.storeGetByClass(File, this, id);
+    let ret = File.storeGetByClass(this, id);
     if (!ret) {
       ret = new File();
     }
@@ -162,7 +161,7 @@ export default class Spaces {
    * @returns {File[]}
    */
   files(id) {
-    return File.storeListByClass(File, this, id);
+    return File.storeListByClass(this, id);
   }
 
   /**
@@ -200,25 +199,25 @@ export default class Spaces {
    * Returns activity for id
    * @param {object} id - ID object to filter on
    */
-  activity(id) { return Activity.storeListByClass(Activity, this, id); }
+  activity(id) { return Activity.storeListByClass(this, id); }
 
   /**
    * Returns annotations for id
    * @param {object} id - ID object to filter on
    */
-  annotations(id) { return Annotation.storeListByClass(Annotation, this, id); }
+  annotations(id) { return Annotation.storeListByClass(this, id); }
 
   /**
    * Returns users matching a given id
    * @param {string} id - ID to filter on
    */
-  users(id) { return Base.storeListByClass(User, this, id); }
+  users(id) { return User.storeListByClass(this, id); }
 
   /**
    * Returns user matching a given id
    * @param {string} id - ID to filter on
    */
-  user(id) { return Base.storeGetByClass(User, this, id); }
+  user(id) { return User.storeGetByClass(this, id); }
 
   /**
    * Load from API

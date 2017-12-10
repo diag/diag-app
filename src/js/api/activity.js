@@ -1,4 +1,5 @@
-import { apiUrl, baseGet, basePost, resolveUserId } from '../utils/apiutils';
+import { Spaces } from '../app';
+import { baseGet, basePost, resolveUserId } from '../utils/apiutils';
 
 function processResponse(p) {
   return p.then(resolveUserId)
@@ -9,7 +10,7 @@ function processResponse(p) {
 }
 
 function run(funct, url, args) {
-  return processResponse(funct(`${apiUrl()}/activity/${url}`, args));
+  return processResponse(funct(`${Spaces.apiUrl()}/activity/${url}`, args));
 }
 
 

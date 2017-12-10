@@ -1,6 +1,6 @@
 import { updateHeaders, headers, apiHost, parseJSON } from './apiutils';
 import { random as textRandom } from './textutils';
-import Spaces from '../app/spaces';
+import { Spaces } from '../app';
 // import fs from 'fs';
 // import path from 'path';
 
@@ -17,11 +17,12 @@ export function getTID() {
 // }
 
 export function testSetup(testName, TID) {
+  Spaces.setApiHost('http://localhost:3333');
   let appWait;
   if (!('SKIP_SERVER' in process.env)) {
     app = require('gdi-http/src/server');
     appWait = app.app.promise
-      .then(() => { console.log('api server ready ... shoot!') });
+      .then(() => { console.log('api server ready ... shoot!'); });
   } else {
     appWait = Promise.resolve();
   }
@@ -30,7 +31,7 @@ export function testSetup(testName, TID) {
 
   console.log('Starting backend test, TID: ', TID);
 
-  const authUrl = `${apiHost()}/auth/token/magic/${owner}?displayName=Test+User${TID}&email=testuser@dev.diag.ai&diag_domains=[{"id":"123","name":"dev"}]`;
+  const authUrl = `${Spaces.apiHost()}/auth/token/magic/${owner}?displayName=Test+User${TID}&email=testuser@dev.diag.ai&diag_domains=[{"id":"123","name":"dev"}]`;
   console.log('Creating new user at URL: ', authUrl);
 
   // if ('UPDATE_NOCK_CACHE' in process.env) {

@@ -1,4 +1,5 @@
-import { apiUrl, baseGet, basePost, baseDelete, basePatch, resolveUserId } from '../utils/apiutils';
+import { Spaces } from '../app';
+import { baseGet, basePost, baseDelete, basePatch, resolveUserId } from '../utils/apiutils';
 
 function processResponse(p) {
   return p.then(resolveUserId)
@@ -25,7 +26,7 @@ function processResponse(p) {
  * @param {object} args - Arguments for the POST or PATCH body
  */
 function run(funct, url, args) {
-  return processResponse(funct(`${apiUrl()}/annotations/${url}`, args));
+  return processResponse(funct(`${Spaces.apiUrl()}/annotations/${url}`, args));
 }
 
 export function getAnnotations(sid, datasetId, fileId) {

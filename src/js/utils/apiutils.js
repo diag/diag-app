@@ -1,3 +1,5 @@
+import { Spaces } from '../app';
+
 let _headers = {
   Accept: 'application/json',
   'Content-Type': 'application/json'
@@ -45,17 +47,6 @@ export function updateHeaders(newHeaders) {
       delete _headers[key];
     }
   });
-}
-
-export function apiUrl() {
-  if (process.env.API_HOST && process.env.API_BASE) {
-    return `${process.env.API_HOST}${process.env.API_BASE}`;
-  }
-  return '/api/v1';
-}
-
-export function apiHost() {
-  return process.env.API_HOST || '';
 }
 
 export function checkMore(payload, url, options, items) {
@@ -147,7 +138,7 @@ export function getUser(uid) {
     return Promise.resolve(cached);
   }
 
-  return baseGet(`${apiUrl()}/users/${uid}`)
+  return baseGet(`${Spaces.apiUrl()}/users/${uid}`)
     .then((res) => {
       USERS_CACHE.set(uid, res);
       return res;

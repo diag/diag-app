@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack --env dev && webpack --env build",
     "dev": "webpack --progress --colors --watch --env dev",
-    "test": "API_HOST=http://localhost:3333 API_BASE=/api/v1 NODE_ENV=test node_modules/.bin/jest -i"
+    "test": "NODE_ENV=test node_modules/.bin/jest -i"
   },
   "dependencies": {
     "compression": "^1.6.2",

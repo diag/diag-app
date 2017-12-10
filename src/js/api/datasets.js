@@ -1,4 +1,5 @@
-import { apiUrl, parseJSON, baseGet, basePost, basePatch, putOptions, resolveUserId } from '../utils/apiutils';
+import { Spaces } from '../app';
+import { parseJSON, baseGet, basePost, basePatch, putOptions, resolveUserId } from '../utils/apiutils';
 
 function processResponse(type, p) {
   return p.then(resolveUserId)
@@ -16,7 +17,7 @@ function processResponse(type, p) {
  * @param {object} args - Arguments for the POST or PATCH body
  */
 function run(type, funct, url, args) {
-  return processResponse(type, funct(`${apiUrl()}/${type}s/${url}`, args));
+  return processResponse(type, funct(`${Spaces.apiUrl()}/${type}s/${url}`, args));
 }
 
 export function getSpace(sid) {
@@ -84,12 +85,12 @@ export function uploadFile(sid, datasetId, name, description, contentType, size,
     .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
     .join('&');
 
-  return processResponse('file', fetch(`${apiUrl()}/files/${sid}/${datasetId}/upload?${query}`, options).then(parseJSON));
+  return processResponse('file', fetch(`${Spaces.apiUrl()}/files/${sid}/${datasetId}/upload?${query}`, options).then(parseJSON));
 }
 
 
 export function getFileContent(sid, datasetId, fileId) {
-  return baseGet(`${apiUrl()}/files/${sid}/${datasetId}/${fileId}/download_url`)
+  return baseGet(`${Spaces.apiUrl()}/files/${sid}/${datasetId}/${fileId}/download_url`)
     .then((payload) => {
       const downloadOptions = {
         headers: payload.http_headers,

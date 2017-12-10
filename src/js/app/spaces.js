@@ -8,6 +8,8 @@ import Base from './base';
 
 let _store;
 let _dispatch;
+let _apiHost = 'https://app.diag.ai';
+let _apiBase = '/api/v1';
 
 /** Top level class representing all spaces we have access to */
 export default class Spaces {
@@ -28,6 +30,38 @@ export default class Spaces {
   static init(dispatch, getStore) {
     _dispatch = dispatch;
     _store = () => getStore().spaces;
+  }
+
+  /**
+   * Sets API URL
+   * @param {string} url - API Host, defaults to https://app.diag.ai
+   */
+  static setApiHost(url) {
+    _apiHost = url;
+  }
+
+  /**
+   * Sets API Base
+   * @param {string} base - API url base, defaults to /api/v1
+   */
+  static setApiBase(base) {
+    _apiBase = base;
+  }
+
+  /**
+   * Retrieives the API URL
+   * @returns {string}
+   */
+  static apiUrl() {
+    return `${_apiHost}${_apiBase}`;
+  }
+
+  /**
+   * Retrieves the API Host - defaults to https://app.diag.ai/
+   * @returns {string}
+   */
+  static apiHost() {
+    return _apiHost;
   }
 
   /**

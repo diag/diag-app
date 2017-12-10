@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "compression": "^1.6.2",
-    "diag-search": "git+ssh://git@github.com/taktakhq/diag-search.git",
+    "diag-search": "git+ssh://git@github.com/diag/diag-search.git",
     "jszip": "^3.1.4",
     "lodash": "^4.17.4",
     "query-string": "^5.0.1",

@@ -1,6 +1,6 @@
 import { getDataset, getDatasets, postDataset, patchDataset } from '../api/datasets';
 import { checkEmpty } from '../utils/apputils';
-import { Index } from 'diag-search/src/js/search';
+import { Index } from 'diag-search';
 import Spaces from './spaces';
 import Space from './space';
 import Base from './base';

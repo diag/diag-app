@@ -16,7 +16,7 @@ let td;
 
 beforeAll(() => {
   td = tu.testData();
-  return tu.testSetup('dataset-test', td.TID)
+  return tu.testSetup('space-test', td.TID)
     .then(() => {
       const middlewares = [thunk];
       const mockStore = configureMockStore(middlewares);
@@ -27,7 +27,7 @@ beforeAll(() => {
       return Promise.resolve();
     });
 });
-afterAll(() => (tu.testTearDown('dataset-test')));
+afterAll(() => (tu.testTearDown('space-test')));
 
 describe('App Spaces', () => {
   describe('Using the Spaces object', () => {

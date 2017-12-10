@@ -1,9 +1,11 @@
 import { getAllSpaces } from '../api/datasets';
+import { updateHeaders } from '../utils/apiutils';
 import Space from './space';
 import Dataset from './dataset';
 import File from './file';
 import Activity from './activity';
 import Annotation from './annotation';
+import User from './user';
 import Base from './base';
 
 let _store;
@@ -46,6 +48,14 @@ export default class Spaces {
    */
   static setApiBase(base) {
     _apiBase = base;
+  }
+
+  /**
+   * Sets API Authorization token
+   * @param {string} token - API Token to authenticate with
+   */
+  static setApiToken(token) {
+    updateHeaders({ Authorization: `Bearer ${token}` });
   }
 
   /**
@@ -160,7 +170,7 @@ export default class Spaces {
    * @param {string} owner - Owner
    * @returns {Space[]}
    */
-  user(owner) { return (this.spaces().filter(s => s.owner === owner) || []); }
+  spacesForUser(owner) { return (this.spaces().filter(s => s.owner === owner) || []); }
 
   /**
    * Returns current space
@@ -197,6 +207,18 @@ export default class Spaces {
    * @param {object} id - ID object to filter on
    */
   annotations(id) { return Annotation.storeListByClass(Annotation, this, id); }
+
+  /**
+   * Returns users matching a given id
+   * @param {string} id - ID to filter on
+   */
+  users(id) { return Base.storeListByClass(User, this, id); }
+
+  /**
+   * Returns user matching a given id
+   * @param {string} id - ID to filter on
+   */
+  user(id) { return Base.storeGetByClass(User, this, id); }
 
   /**
    * Load from API

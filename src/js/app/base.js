@@ -239,25 +239,29 @@ export default class Base {
   static _getFilterFunc(id, type = 'list') {
     let fFunc;
     if (id) {
-      if ('file_id' in id) { // We're something below a file
-        fFunc = (item) => (item.id.item_id === id.item_id && item.id.file_id === id.file_id && item.id.dataset_id === id.dataset_id && item.id.space_id === id.space_id);
-      } else if ('dataset_id' in id) { // We're a file
-        if (type === 'get') {
-          fFunc = (item) => (item.id.item_id === id.item_id && item.id.dataset_id === id.dataset_id && item.id.space_id === id.space_id);
-        } else {
-          fFunc = (item) => (item.id.file_id === id.item_id && item.id.dataset_id === id.dataset_id && item.id.space_id === id.space_id);
-        }
-      } else if ('space_id' in id) { // We're a dataset
-        if (type === 'get') {
-          fFunc = (item) => (item.id.item_id === id.item_id && item.id.space_id === id.space_id);
-        } else {
-          fFunc = (item) => (item.id.dataset_id === id.item_id && item.id.space_id === id.space_id);
-        }
-      } else { // Nothing else in the id, we're filtering on space_id
-        if (type === 'get') {
-          fFunc = (item) => item.id.item_id === id.item_id;
-        } else {
-          fFunc = (item) => item.id.space_id === id.item_id;
+      if (typeof id === 'string') {
+        fFunc = (item) => item.id.toString().indexOf(id) > -1;
+      } else {
+        if ('file_id' in id) { // We're something below a file
+          fFunc = (item) => (item.id.item_id === id.item_id && item.id.file_id === id.file_id && item.id.dataset_id === id.dataset_id && item.id.space_id === id.space_id);
+        } else if ('dataset_id' in id) { // We're a file
+          if (type === 'get') {
+            fFunc = (item) => (item.id.item_id === id.item_id && item.id.dataset_id === id.dataset_id && item.id.space_id === id.space_id);
+          } else {
+            fFunc = (item) => (item.id.file_id === id.item_id && item.id.dataset_id === id.dataset_id && item.id.space_id === id.space_id);
+          }
+        } else if ('space_id' in id) { // We're a dataset
+          if (type === 'get') {
+            fFunc = (item) => (item.id.item_id === id.item_id && item.id.space_id === id.space_id);
+          } else {
+            fFunc = (item) => (item.id.dataset_id === id.item_id && item.id.space_id === id.space_id);
+          }
+        } else { // Nothing else in the id, we're filtering on space_id
+          if (type === 'get') {
+            fFunc = (item) => item.id.item_id === id.item_id;
+          } else {
+            fFunc = (item) => item.id.space_id === id.item_id;
+          }
         }
       }
     } else {

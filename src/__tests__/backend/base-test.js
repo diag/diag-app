@@ -12,6 +12,9 @@ let t5;
 let t6;
 let t7;
 let t8;
+let u;
+let u2;
+let u3;
 let s;
 
 beforeAll(() => {
@@ -42,6 +45,13 @@ beforeAll(() => {
   t6 = new Test({ item_id: 'foo2' });
   t7 = new Test({ space_id: 'foo', item_id: '12' });
   t8 = new Test({ space_id: 'foo', dataset_id: '12', item_id: '12' });
+
+  u = new Test('foo@user');
+  u2 = new Test('foo2@user2');
+  class Id { toString() { return this.item_id; } }
+  const testId = new Id();
+  testId.item_id = 'foo';
+  u3 = new Test(testId);
 });
 
 function updateStore(store) {
@@ -188,5 +198,20 @@ describe('Base properties', () => {
     updateStore(t.storeLoad([]));
     expect(t.storeList({ item_id: 'foo2' })).toHaveLength(0);
     expect(t.storeGet({ item_id: 'foo2' })).toBeUndefined();
+  });
+
+  it('handles string ids with get', () => {
+    updateStore(new Spaces({}));
+    updateStore(t.storeLoad([u, u2]));
+    expect(t.storeGet('foo@user')).toBe(u);
+    expect(t.storeGet('foo@user2')).toBeUndefined();
+  });
+
+  it('handles string ids with list', () => {
+    updateStore(new Spaces({}));
+    updateStore(t.storeLoad([u, u2, u3]));
+    expect(t.storeList('foo')).toHaveLength(3);
+    expect(t.storeList('foo2@user2')).toHaveLength(1);
+    expect(t.storeList('asdf')).toHaveLength(0);
   });
 });

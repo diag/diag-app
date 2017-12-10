@@ -31,12 +31,6 @@ const config = {
   },
   module: {
     rules: [
-      // Temporary hack until we convert diag-search to a module
-      {
-        // TODO: move this to diag-search
-        test: /diag-search\/src\/js/,
-        loader: 'babel-loader'
-      },
       {
         test: /(\.jsx|\.js)$/,
         loader: 'babel-loader',

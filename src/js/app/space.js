@@ -6,10 +6,6 @@ import Base from './base';
 
 /** Space containing datasets and activity */
 export default class Space extends Base {
-  /**
-   * Create a space
-   * @param {Object} space - Create new space with object from API
-   */
   constructor(space) {
     super(Spaces.store);
     Object.assign(this, space);

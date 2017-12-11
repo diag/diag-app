@@ -1,5 +1,4 @@
 import { getDataset, getDatasets, postDataset, patchDataset } from '../api/datasets';
-import { checkEmpty } from '../utils/apputils';
 import { Index } from 'diag-search';
 import Spaces from './spaces';
 import Space from './space';
@@ -101,9 +100,7 @@ export default class Dataset extends Base {
     }
     return dsPromise
       .then(payload => (
-        checkEmpty(payload, () => (
-          payload.items.map(i => new Dataset(i))
-        ))
+        payload.items.map(i => new Dataset(i))
       ));
   }
 

@@ -171,36 +171,24 @@ export default class File extends Base {
 
   /**
    * Loads files from the API
-   * @param {(Dataset|spaceId)} datasetOrSpaceId - Dataset to fetch files for
-   * @param {(string)} datasetId - Dataset Id to fetch files for
+   * @param {Dataset} dataset - Dataset to fetch files for
    * @returns {Promise<File[]>}
    */
-  static load(datasetOrSpaceId, datasetId) {
-    if (datasetOrSpaceId === undefined) {
-      return Promise.reject('datasetOrSpaceId undefined');
+  static load(dataset) {
+    if (dataset === undefined) {
+      return Promise.reject('dataset undefined');
     }
-    if (!(datasetOrSpaceId instanceof Dataset) && !datasetId) {
+    if (!(dataset instanceof Dataset)) {
       return Promise.reject('dataset is not an instance of Dataset');
     }
-    let spaceId;
-    let dataset;
-    if (datasetOrSpaceId instanceof Dataset) {
-      spaceId = datasetOrSpaceId.space().itemid();
-      datasetId = datasetOrSpaceId.itemid();
-      dataset = datasetOrSpaceId;
-    } else {
-      spaceId = datasetOrSpaceId;
-    }
-    return getFiles(spaceId, datasetId)
+    return getFiles(dataset.space().itemid(), dataset.itemid())
       .then(payload => (
         payload.items.map(f => {
           const mf = new File(f);
           // TODO: consider potential cache size bloat
-          if (dataset) {
-            const cf = dataset.file(mf.itemid());
-            if (cf) {
-              mf.setRawContent(cf.rawContent());
-            }
+          const cf = dataset.file(mf.itemid());
+          if (cf) {
+            mf.setRawContent(cf.rawContent());
           }
           return mf;
         })
@@ -223,7 +211,7 @@ export default class File extends Base {
                 f.setRawContent(newf.rawContent()); // copy content from newF
                 return File._expandArchive(newf, filesToAdd, filesToRemove);
               }).catch((err) => {
-                console.error(`Failed to load contents of dataset=${datasetId}, file=${f.name}, err=${err}`);
+                console.error(`Failed to load contents of dataset=${dataset.name}, file=${f.name}, err=${err}`);
               })
           );
         });

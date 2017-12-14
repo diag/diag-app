@@ -1,7 +1,8 @@
 import {
-  getFileContent, uploadFile, getFiles, patchFile,
+  getFileContent, uploadFile, getFiles, patchFile, getFile,
 } from '../api/datasets';
-import { props, isArchiveFile, gunzipIfNeeded, isZipArchive, isTarArchive, StrStream } from '../utils/apputils';
+import { AssetId } from '../utils';
+import { props, isArchiveFile, gunzipIfNeeded, isZipArchive, isTarArchive, StrStream, checkEmpty } from '../utils/apputils';
 import { extract } from 'tar-stream';
 import JSZip from 'jszip';
 import Spaces from './spaces';
@@ -66,22 +67,71 @@ export default class File extends Base {
 
   /**
    * Fetch a file from the API
+   * @param {object} stream - Stream to pipe output to
    * @returns {Promise<File>}
    */
-  load() {
+  load(stream) {
     if (this.rawContent() !== undefined) {
       return Promise.resolve(this);
     }
     const ret = this.copy();
-    return getFileContent(this.space().itemid(), this.dataset().itemid(), this.itemid())
+    return File.load(ret, stream);
+  }
+
+  /**
+   * Fetches a file from the API
+   * @param {(File|string)} fileOrId - File to return or string ID
+   * @param {object} stream - Stream to pipe to, otherwise return data in the object itself
+   * @param {bool} download - Download data
+   * @returns {File}
+   */
+  static load(fileOrId, stream, download = true) {
+    let id;
+    let ret;
+    let filePromise;
+    if (fileOrId === undefined) {
+      return Promise.reject('fileOrId undefined');
+    }
+    if (!(fileOrId instanceof File)) {
+      id = new AssetId(fileOrId);
+      if (!id.valid() && !(fileOrId instanceof File)) {
+        return Promise.reject('fileOrId is not a valid File object or a valid AssetId');
+      }
+      filePromise = getFile(id.space_id, id.dataset_id, id.item_id)
+        .then(payload => (
+          checkEmpty(payload, () => (new File(payload.items[0])))
+        ));
+    } else {
+      id = fileOrId.id;
+      filePromise = Promise.resolve(fileOrId);
+    }
+    return filePromise
       .then((payload) => {
-        ret.setRawContent(payload);
+        ret = payload;
+        if (download) {
+          return getFileContent(id.space_id, id.dataset_id, id.item_id)
+            .then((res) => {
+              if (stream) {
+                res.body.pipe(stream);
+                return Promise.resolve();
+              }
+              return res.arrayBuffer();
+            })
+            .then((filecontent) => {
+              if (stream) {
+                return Promise.resolve(ret);
+              }
+              ret.setRawContent(filecontent);
+              return Promise.resolve(ret);
+            });
+        }
         return Promise.resolve(ret);
       });
   }
+
   /**
    * Saves a File to the API
-   * @param {Dataset} dataset - Parent dataset object
+   * @param {(Dataset|string)} dataset - Parent dataset object or Dataset ID as serialized by AssetID
    * @param {string} name - Name of the file
    * @param {string} [description] - Description of the file (optional)
    * @param {string} contentType - Content type of the file (MIME)
@@ -89,11 +139,19 @@ export default class File extends Base {
    * @param {string} content - Content of the file
    */
   static create(dataset, name, description, contentType, size, content) {
+    let id;
+    let indexFile = false;
     if (dataset === undefined) {
       return Promise.reject('dataset undefined');
     }
     if (!(dataset instanceof Dataset)) {
-      return Promise.reject('dataset is not Dataset object');
+      id = new AssetId(dataset);
+      if (!id.valid() && !(dataset instanceof Dataset)) {
+        return Promise.reject('dataset is not a valid Dataset object or valid AssetId');
+      }
+    } else {
+      id = dataset.id;
+      indexFile = true;
     }
     if (name === undefined) {
       return Promise.reject('name undefined');
@@ -108,7 +166,7 @@ export default class File extends Base {
       return Promise.reject('contentType undefined');
     }
 
-    return uploadFile(dataset.space().itemid(), dataset.itemid(), name, description, contentType, size, content)
+    return uploadFile(id.space_id, id.item_id, name, description, contentType, size, content)
       .catch((e) => (Promise.reject(e)))
       .then((payload) => {
         if (payload.count > 0) {
@@ -118,11 +176,15 @@ export default class File extends Base {
               const encoder = new TextEncoder('utf8');
               const buf = encoder.encode(content).buffer; // TextEncoder returns UInt8Array
               f.setRawContent(buf);
-              dataset.addFileToIndex(f);
+              if (indexFile) {
+                dataset.addFileToIndex(f);
+              }
               resolve(f);
             } else if (content.constructor.name === 'ArrayBuffer' || content instanceof ArrayBuffer) {
               f.setRawContent(content);
-              dataset.addFileToIndex(f);
+              if (indexFile) {
+                dataset.addFileToIndex(f);
+              }
               resolve(f);
             } else if (content.constructor.name === 'File' || content instanceof File) {
               const fr = new FileReader();
@@ -139,9 +201,11 @@ export default class File extends Base {
                   // at this point f.getRawContent() will contain uncompressed data (might still be archived tho)
                   return p.then(() => {
                     if (!isArchiveFile(f.name)) {
-                      dataset.addFileToIndex(f); // simple file
+                      if (indexFile) {
+                        dataset.addFileToIndex(f); // simple file
+                      }
                       resolve(f);
-                    } else {
+                    } else if (indexFile) {
                       const toAdd = [];
                       const toRemove = [];
                       console.log(`${Date.now()} - will expand local archive=${f.name} ...`);
@@ -170,65 +234,73 @@ export default class File extends Base {
   }
 
   /**
-   * Loads files from the API
-   * @param {Dataset} dataset - Dataset to fetch files for
+   * Lists files from the API for a dataset
+   * @param {(Dataset|string)} dataset - Dataset object to fetch files for or DatasetID as serialized by AssetID
    * @returns {Promise<File[]>}
    */
-  static load(dataset) {
+  static list(dataset) {
+    let id;
+    let checkFile = false;
     if (dataset === undefined) {
       return Promise.reject('dataset undefined');
     }
     if (!(dataset instanceof Dataset)) {
-      return Promise.reject('dataset is not an instance of Dataset');
+      id = new AssetId(dataset);
+      if (!id.valid() && !(dataset instanceof Dataset)) {
+        return Promise.reject('dataset is not a valid Dataset object or valid AssetId');
+      }
+    } else {
+      id = dataset.id;
+      checkFile = true;
     }
-    return getFiles(dataset.space().itemid(), dataset.itemid())
-      .then(payload => (
-        payload.items.map(f => {
+    return getFiles(id.space_id, id.item_id)
+      .then(payload => {
+        const files = payload.items.map(f => {
           const mf = new File(f);
           // TODO: consider potential cache size bloat
-          const cf = dataset.file(mf.itemid());
-          if (cf) {
-            mf.setRawContent(cf.rawContent());
+          if (checkFile) {
+            const cf = dataset.file(mf.itemid());
+            if (cf && cf.itemid() !== undefined) {
+              mf.setRawContent(cf.rawContent());
+            }
           }
           return mf;
-        })
-      ))
-      .then((files) => {
-        let ret = [...files];
-        // download and index files in the DS
-        // TODO; move this to a bg task
-        const startTime = Date.now();
-        console.log(`${startTime} - download start`);
-        const downloads = [];
-
-        const filesToAdd = [];
-        const filesToRemove = [];
-        files.forEach((f) => {
-          downloads.push(
-            f.load()
-              .then((newf) => {
-                console.log(`${Date.now()} - downloaded file=${f.name}`);
-                f.setRawContent(newf.rawContent()); // copy content from newF
-                return File._expandArchive(newf, filesToAdd, filesToRemove);
-              }).catch((err) => {
-                console.error(`Failed to load contents of dataset=${dataset.name}, file=${f.name}, err=${err}`);
-              })
-          );
         });
-        return Promise.all(downloads)
-          .then(() => {
-            // remove/add files
-            ret = [...ret, ...filesToAdd].filter(f => filesToRemove.findIndex(fr => isEqual(fr.id, f.id)) === -1);
-            // ret._updateFiles(filesToAdd, filesToRemove);
-          })
-          .then(() => {
-            const endTime = Date.now();
-            console.log(`${endTime} - download done in ${endTime - startTime} ms`);
-          })
-          .then(() => (Promise.resolve(ret)));
-      })
-      .catch((err) => {
-        console.log(err);
+        if (Spaces.initialized()) {
+          let ret = [...files];
+          // download and index files in the DS
+          // TODO; move this to a bg task
+          const startTime = Date.now();
+          console.log(`${startTime} - download start`);
+          const downloads = [];
+
+          const filesToAdd = [];
+          const filesToRemove = [];
+          files.forEach((f) => {
+            downloads.push(
+              f.load()
+                .then((newf) => {
+                  console.log(`${Date.now()} - downloaded file=${f.name}`);
+                  f.setRawContent(newf.rawContent()); // copy content from newF
+                  return File._expandArchive(newf, filesToAdd, filesToRemove);
+                }).catch((err) => {
+                  console.error(`Failed to load contents of dataset=${dataset.name}, file=${f.name}, err=${err}`);
+                })
+            );
+          });
+          return Promise.all(downloads)
+            .then(() => {
+              // remove/add files
+              ret = [...ret, ...filesToAdd].filter(f => filesToRemove.findIndex(fr => isEqual(fr.id, f.id)) === -1);
+              // ret._updateFiles(filesToAdd, filesToRemove);
+            })
+            .then(() => {
+              const endTime = Date.now();
+              console.log(`${endTime} - download done in ${endTime - startTime} ms`);
+            })
+            .then(() => (Promise.resolve(ret)));
+        }
+        return files;
       });
     // return getFiles(this.space().itemid(), this.itemid())
     //   .then(payload => (

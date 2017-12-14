@@ -1,7 +1,9 @@
 import * as tu from '../../js/utils/testutils';
 import { Spaces, Space, Dataset, File } from '../../js/app';
+import { AssetId } from '../../js/utils';
 import fetch from 'node-fetch';
 import { polyfill as promisePolyfill } from 'es6-promise';
+import * as stream from 'stream';
 
 // Redux
 import configureMockStore from 'redux-mock-store';
@@ -42,7 +44,7 @@ beforeAll(() => {
     .then((dataset2) => {
       td.dataset2Id = dataset2.itemid();
       td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_CREATE', payload: dataset2 });
-      td.dataset2 = () => td.spaces.dataset(td.spaceId, td.dataset2Id)
+      td.dataset2 = () => td.spaces.dataset(td.spaceId, td.dataset2Id);
     });
 });
 afterAll(() => (tu.testTearDown('file-test')));
@@ -80,12 +82,12 @@ describe('App Files', () => {
       })
   ));
 
-  it('wont load without dataset', () => {
-    expect(File.load(undefined)).rejects.toBeDefined();
+  it('wont list without dataset', () => {
+    expect(File.list(undefined)).rejects.toBeDefined();
   });
 
-  it('File.load() loads', () => (
-    File.load(td.dataset())
+  it('File.list() lists', () => (
+    File.list(new AssetId(td.dataset().id).toString())
       .then((payload) => {
         td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_LOAD', payload });
         expect(td.dataset().files()).toHaveLength(1);
@@ -96,15 +98,12 @@ describe('App Files', () => {
   ));
 
   it('Can save file 2', () => (
-    File.create(td.dataset2(), td.f2orig.name, td.f2orig.description, td.f2orig.contentType, td.f2orig.content.length, td.f2orig.content)
+    File.create(new AssetId(td.dataset2().id).toString(), td.f2orig.name, td.f2orig.description, td.f2orig.contentType, td.f2orig.content.length, td.f2orig.content)
       .then((f) => {
         td.file2 = f;
         td.file2Id = f.itemid();
         expect(td.file2Id).toBeTruthy();
         expect(td.file2.dataset().itemid()).toBe(td.dataset2().itemid());
-      })
-      .catch((err) => {
-        console.log(err);
       })
   ));
 
@@ -160,6 +159,45 @@ describe('App Files', () => {
     expect(props.created_at).toBeDefined();
     expect(props._parent).not.toBeDefined();
   });
+
+  it('wont load without a valid asset id', () => {
+    expect(File.load(undefined)).rejects.toBeDefined();
+  });
+
+  it('should load with an assetId', () => {
+    const idStr = new AssetId(td.file1.id).toString();
+    return File.load(idStr)
+      .then((payload) => {
+        expect(payload._content).toBe(td.file1._content);
+      });
+  });
+
+  it('should load with a stream', () => {
+    td.file1._content = undefined;
+    td.file1._rawContent = undefined;
+    let ret = '';
+    class MemStream extends stream.Writable {
+      _write(chunk, enc, next) {
+        ret += chunk.toString();
+        next();
+      }
+    }
+    const buf = new MemStream();
+
+    let file;
+    return td.file1.load(buf)
+      .then((f) => {
+        file = f;
+        expect(file.name).toBe(td.file1.name);
+        expect(file.size).toBe(td.file1.size);
+        return new Promise(resolve => {
+          buf.on('finish', resolve);
+        });
+      })
+      .then(() => {
+        expect(ret).toBe(td.f1orig.content);
+      });
+  });
 });
 
 describe('Redux Files', () => {
@@ -182,8 +220,8 @@ describe('Redux Files', () => {
         })
     ));
 
-    it('fileLoad returns the file', () => (
-      Spaces.dispatchLoad(File.load(td.dataset()))
+    it('fileList returns the file', () => (
+      Spaces.dispatchLoad(File.list(td.dataset()))
         .then(() => {
           const actions = td.store.getActions();
           expect(actions.length).toBeGreaterThan(0);

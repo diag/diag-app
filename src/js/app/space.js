@@ -59,7 +59,7 @@ export default class Space extends Base {
    * @returns {Promise<Space>}
    */
   update() {
-    return patchSpace(this.itemid(), this.name)
+    return patchSpace(this.id.item_id, this.name)
       .then((payload) => {
         const ret = this.copy();
         if (payload.count > 0) {

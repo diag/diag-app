@@ -4,7 +4,11 @@ import isEqual from 'lodash/fp/isEqual';
 export default class Base {
   constructor(store) {
     // _store is a function which will return Spaces
+    this.initialized = false;
     this._store = store;
+    if (typeof this._store === 'function') {
+      this.initialized = true;
+    }
   }
 
   /**
@@ -83,6 +87,9 @@ export default class Base {
     if (!spaceId) {
       return undefined;
     }
+    if (typeof this._store().space !== 'function') {
+      return undefined;
+    }
     return this._store().space(spaceId);
   }
 
@@ -102,6 +109,9 @@ export default class Base {
     if (!datasetId || !spaceId) {
       return undefined;
     }
+    if (typeof this._store().dataset !== 'function') {
+      return undefined;
+    }
     return this._store().dataset(spaceId, datasetId);
   }
 
@@ -114,6 +124,9 @@ export default class Base {
     }
     const spaceId = this.id.space_id ? this.id.space_id : this.id.item_id;
     if (!spaceId) {
+      return [];
+    }
+    if (typeof this._store().datasets !== 'function') {
       return [];
     }
     return this._store().datasets(spaceId);
@@ -136,6 +149,9 @@ export default class Base {
     if (!fileId || !datasetId || !spaceId) {
       return undefined;
     }
+    if (typeof this._store().file !== 'function') {
+      return undefined;
+    }
     return this._store().file(spaceId, datasetId, fileId);
   }
 
@@ -146,9 +162,12 @@ export default class Base {
     const datasetId = this.id.dataset_id ? this.id.dataset_id : this.id.item_id;
     const spaceId = this.id.space_id;
     if (!datasetId || !spaceId) {
-      return undefined;
+      return [];
     }
     const id = { space_id: spaceId, dataset_id: datasetId };
+    if (typeof this._store().files !== 'function') {
+      return [];
+    }
     return this._store().files(id);
   }
 
@@ -156,6 +175,9 @@ export default class Base {
    * Annotations
    */
   annotations() {
+    if (typeof this._store().annotations !== 'function') {
+      return [];
+    }
     return this._store().annotations(this.id);
   }
 
@@ -163,6 +185,9 @@ export default class Base {
    * Activity
    */
   activity() {
+    if (typeof this._store().activity !== 'function') {
+      return [];
+    }
     return this._store().activity(this.id);
   }
 

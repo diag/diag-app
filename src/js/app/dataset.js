@@ -48,7 +48,7 @@ export default class Dataset extends Base {
     // TODO: index only files that look like text ...
     if (!skip) {
       index = index || new Index();
-      index.add(f.itemid(), f.content(), new RegExp(breaker, 'g'), tokenizer);
+      index.add(f.id.item_id, f.content(), new RegExp(breaker, 'g'), tokenizer);
     }
     return index;
   }
@@ -63,7 +63,7 @@ export default class Dataset extends Base {
 
   removeFileFromIndex(f) {
     if (this._index) {
-      this._index.removeBySource(f.itemid());
+      this._index.removeBySource(f.id.item_id);
     }
   }
 
@@ -127,7 +127,7 @@ export default class Dataset extends Base {
     if (!Array.isArray(tags) && tags !== undefined) {
       return Promise.reject('tags is not an array');
     }
-    return postDataset(space.itemid(), name, description, tags, problem, resolution)
+    return postDataset(space.id.item_id, name, description, tags, problem, resolution)
       .then((payload) => {
         if (payload.count > 0) {
           return new Promise(resolve => resolve(new Dataset(payload.items[0])));
@@ -141,7 +141,7 @@ export default class Dataset extends Base {
    */
   update() {
     // update dataset itself
-    return patchDataset(this.space().itemid(), this.itemid(), this.name, this.description, this.tags, this.problem, this.resolution)
+    return patchDataset(this.id.space_id, this.id.item_id, this.name, this.description, this.tags, this.problem, this.resolution)
       .then((payload) => {
         if (payload.count > 0) {
           // HACK shouldn't mutate existing state, but this saves us from having to reload the whole dataset from the server

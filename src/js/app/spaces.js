@@ -11,6 +11,7 @@ let _store;
 let _dispatch;
 let _apiHost = 'https://app.diag.ai';
 let _apiBase = '/api/v1';
+let _initialized = false;
 
 /** Top level class representing all spaces we have access to */
 export default class Spaces {
@@ -31,6 +32,7 @@ export default class Spaces {
   static init(dispatch, getStore) {
     _dispatch = dispatch;
     _store = () => getStore().spaces;
+    _initialized = true;
   }
 
   /**
@@ -78,8 +80,17 @@ export default class Spaces {
    * @returns {object}
    */
   static store() {
+    if (!_store) {
+      return {};
+    }
     return _store();
   }
+
+  /**
+   * Returns whether we've initialized the Spaces store
+   * @returns {bool}
+   */
+  static initialized() { return _initialized; }
 
   /**
    * Returns a copy of Spaces

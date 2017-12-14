@@ -62,6 +62,10 @@ export function patchFile(file, patchOptions) {
   return run('file', basePatch, `${fid.space_id}/${fid.dataset_id}/${fid.item_id}`, patchOptions);
 }
 
+export function getFile(sid, datasetId, fileId) {
+  return run('file', baseGet, `${sid}/${datasetId}/${fileId}`);
+}
+
 export function getFiles(sid, datasetId) {
   return run('file', baseGet, `${sid}/${datasetId}`);
 }
@@ -97,7 +101,6 @@ export function getFileContent(sid, datasetId, fileId) {
         method: payload.http_method,
         credentials: 'same-origin',
       };
-      return fetch(payload.signed_url, downloadOptions)
-        .then(res => res.arrayBuffer());
+      return fetch(payload.signed_url, downloadOptions);
     });
 }

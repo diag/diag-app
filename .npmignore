@@ -2,3 +2,8 @@
 **/webpack.config.js
 node_modules
 src
+codeship*
+*.env*
+*args*
+coverage
+TODO

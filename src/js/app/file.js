@@ -9,7 +9,7 @@ import Spaces from './spaces';
 import Dataset from './dataset';
 import Base from './base';
 import { TextEncoder, TextDecoder } from 'text-encoding';
-import isEqual from 'lodash/fp/isEqual';
+import * as isEqual from 'lodash/fp/isEqual';
 
 /* global FileReader */
 /* eslint consistent-return: off */

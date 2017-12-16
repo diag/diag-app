@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "system",
+    "outDir": "./built",
+    "allowJs": true,
+    "target": "es5",
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "lib": [
+      "es2015",
+      "dom"
+    ]
+  },
+  "include": [
+    "./src/**/*"
+  ]
+}

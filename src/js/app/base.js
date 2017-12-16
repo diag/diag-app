@@ -1,5 +1,6 @@
 import { props } from '../utils/apputils';
-import isEqual from 'lodash/fp/isEqual';
+
+const isEqual = require('lodash/fp/isEqual');
 
 export default class Base {
   constructor(store) {

@@ -1,5 +1,6 @@
 import { postSpaceActivity, postDatasetActivity, postFileActivity, getSpaceActivity } from '../api/activity';
 import { checkEmpty } from '../utils/apputils';
+import { AssetId } from '../utils';
 import Spaces from './spaces';
 import Space from './space';
 import Dataset from './dataset';
@@ -25,11 +26,17 @@ export default class Activity extends Base {
    * @param {Object} data - Full data of the activity. Should contain at minimum the ID object of what the activity references.
    */
   static create(parent, type, data) {
+    let id;
     if (parent === undefined) {
       return Promise.reject('parent undefined');
     }
     if (!(parent instanceof Space || parent instanceof Dataset || parent instanceof File)) {
-      return Promise.reject('parent is not a Space, Dataset or File');
+      id = new AssetId(parent);
+      if (!id.valid() && !(parent instanceof Space || parent instanceof Dataset || parent instanceof File)) {
+        return Promise.reject('parent is not a Space, Dataset, File or valid AssetId');
+      }
+    } else {
+      id = parent.id;
     }
     if (type === undefined) {
       return Promise.reject('type undefined');
@@ -48,12 +55,12 @@ export default class Activity extends Base {
       return Promise.reject('data.id is not ID object');
     }
     let ret;
-    if (parent instanceof Space) {
-      ret = postSpaceActivity(parent.itemid(), type, data);
-    } else if (parent instanceof Dataset) {
-      ret = postDatasetActivity(parent.space().itemid(), parent.itemid(), type, data);
-    } else if (parent instanceof File) {
-      ret = postFileActivity(parent.space().itemid(), parent.dataset().itemid(), parent.itemid(), type, data);
+    if (parent instanceof Space || id._type === 'space') {
+      ret = postSpaceActivity(id.item_id, type, data);
+    } else if (parent instanceof Dataset || id._type === 'dataset') {
+      ret = postDatasetActivity(id.space_id, id.item_id, type, data);
+    } else if (parent instanceof File || id._type === 'file') {
+      ret = postFileActivity(id.space_id, id.dataset_id, id.item_id, type, data);
     }
     return ret
       .then(payload => (
@@ -65,17 +72,23 @@ export default class Activity extends Base {
 
   /**
    * Loads activity from the api
-   * @param {Space} parent - Space to load activity for
+   * @param {(Space|string)} parent - Space or AssetId to load activity for
    * @returns Promise<Activity>
    */
   static load(space) {
+    let id;
     if (space === undefined) {
       return Promise.reject('space undefined');
     }
     if (!(space instanceof Space)) {
-      return Promise.reject('space is not a space object');
+      id = new AssetId(space);
+      if (!id.valid() && !(space instanceof Space)) {
+        return Promise.reject('space is not a space object or valid AssetId');
+      }
+    } else {
+      id = space.id;
     }
-    return getSpaceActivity(space.itemid())
+    return getSpaceActivity(id.item_id)
       .then(payload => (
         payload.items.map(i => new Activity(space, i))
       ));

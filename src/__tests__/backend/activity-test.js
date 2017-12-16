@@ -7,6 +7,7 @@ import { polyfill as promisePolyfill } from 'es6-promise';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { DIAG_CREATE } from '../../js/actions';
+import { AssetId } from '../../js/utils';
 
 global.fetch = fetch;
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 15000;
@@ -85,7 +86,7 @@ describe('App Activity', () => {
   ));
 
   it('Saves for a file', () => (
-    Activity.create(td.file(), 'create', { id: td.file().id })
+    Activity.create(new AssetId(td.file().id).toString(), 'create', { id: td.file().id })
       .then((a) => {
         td.fileact = a;
         expect(a.itemid()).toBeTruthy();
@@ -109,6 +110,17 @@ describe('App Activity', () => {
 
   it('Can be read back', () => (
     Activity.load(td.space())
+      .then((payload) => {
+        // Directly mutate state for tests
+        td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_LOAD', payload });
+        // Since space has a closure which refers to the state
+        // we should be readable from everywhere
+        expect(td.space().activity().find(a => a.id.item_id === td.datasetact.itemid())).toBeTruthy();
+      })
+  ));
+
+  it('Can be read back from an AssetId', () => (
+    Activity.load(new AssetId(td.space().id).toString())
       .then((payload) => {
         // Directly mutate state for tests
         td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_LOAD', payload });

@@ -70,10 +70,17 @@ export function checkMore(payload, url, options, items) {
   // If we have a resumeToken, append resume token to the URL
   // and return another fetch promise
   if (payload.resumeToken) {
-    const parser = document.createElement('a');
-    parser.href = url;
+    let search;
+    let parser;
     let sep = '?';
-    let search = parser.search;
+    if (document) {
+      parser = document.createElement('a');
+      parser.href = url;
+    } else {
+      const { URL } = require('url');
+      parser = new URL(url);
+    }
+    search = parser.search;
     if (search.length > 0) {
       sep = '&';
     }

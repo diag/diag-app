@@ -2,7 +2,7 @@
   "name": "diag-app",
   "description": "Diag app library",
   "version": "0.0.5",
-  "main": "dist/index.js",
+  "main": "dist/js/index.js",
   "scripts": {
     "init": "mkdir dist",
     "clean": "rm -rf dist",

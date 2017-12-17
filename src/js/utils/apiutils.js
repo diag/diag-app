@@ -73,7 +73,7 @@ export function checkMore(payload, url, options, items) {
     let search;
     let parser;
     let sep = '?';
-    if (document) {
+    if (typeof document !== 'undefined') {
       parser = document.createElement('a');
       parser.href = url;
     } else {

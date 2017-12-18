@@ -56,7 +56,11 @@ export default class Spaces {
    * @param {string} token - API Token to authenticate with
    */
   static setApiToken(token) {
-    updateHeaders({ Authorization: `Bearer ${token}` });
+    let bOrD = 'Bearer';
+    if (token.match(/\d+\.\w{12}/)) {
+      bOrD = 'Diag';
+    }
+    updateHeaders({ Authorization: `${bOrD} ${token}` });
   }
 
   /**

@@ -57,7 +57,7 @@ export default class Spaces {
    */
   static setApiToken(token) {
     let bOrD = 'Bearer';
-    if (token.match(/\d+\.\w{12}/)) {
+    if (token.match(/^\d+\.\w{12}$/)) {
       bOrD = 'Diag';
     }
     updateHeaders({ Authorization: `${bOrD} ${token}` });

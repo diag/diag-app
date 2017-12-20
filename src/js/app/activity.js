@@ -1,4 +1,4 @@
-import { postSpaceActivity, postDatasetActivity, postFileActivity, getSpaceActivity } from '../api/activity';
+import { postSpaceActivity, postDatasetActivity, postFileActivity, getSpaceActivity, getDatasetActivity } from '../api/activity';
 import { checkEmpty } from '../utils/apputils';
 import { AssetId } from '../utils';
 import Spaces from './spaces';
@@ -11,10 +11,9 @@ import Base from './base';
 export default class Activity extends Base {
   /**
    * Create activity
-   * @param {Space} parent - Parent
    * @param {Object} activity - Activity object from API
    */
-  constructor(parent, activity) {
+  constructor(activity) {
     super(Spaces.store);
     Object.assign(this, activity);
   }
@@ -65,32 +64,38 @@ export default class Activity extends Base {
     return ret
       .then(payload => (
         checkEmpty(payload, () => (
-          new Promise(resolve => resolve(new Activity(parent, payload.items[0])))
+          new Promise(resolve => resolve(new Activity(payload.items[0])))
         ))
       ));
   }
 
   /**
    * Loads activity from the api
-   * @param {(Space|string)} parent - Space or AssetId to load activity for
+   * @param {(Space|Dataset|string)} parent - Space, Dataset or AssetId to load activity for
    * @returns Promise<Activity>
    */
-  static load(space) {
+  static load(parent) {
     let id;
-    if (space === undefined) {
-      return Promise.reject('space undefined');
+    if (parent === undefined) {
+      return Promise.reject('parent undefined');
     }
-    if (!(space instanceof Space)) {
-      id = new AssetId(space);
-      if (!id.valid() && !(space instanceof Space)) {
-        return Promise.reject('space is not a space object or valid AssetId');
+    if (!(parent instanceof Space || parent instanceof Dataset)) {
+      id = new AssetId(parent);
+      if (!id.valid() && !(parent instanceof Space || parent instanceof Dataset)) {
+        return Promise.reject('parent is not a Space, Dataset or valid AssetId');
       }
     } else {
-      id = space.id;
+      id = parent.id;
     }
-    return getSpaceActivity(id.item_id)
+    let ret;
+    if (parent instanceof Space || id._type === 'space') {
+      ret = getSpaceActivity(id.item_id);
+    } else if (parent instanceof Dataset || id._type === 'dataset') {
+      ret = getDatasetActivity(id.item_id);
+    }
+    return ret
       .then(payload => (
-        payload.items.map(i => new Activity(space, i))
+        payload.items.map(i => new Activity(i))
       ));
   }
 }

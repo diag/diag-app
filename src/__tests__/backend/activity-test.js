@@ -130,6 +130,17 @@ describe('App Activity', () => {
       })
   ));
 
+  it('Can be read back from a dataset', () => (
+    Activity.load(new AssetId(td.dataset().id).toString())
+      .then((payload) => {
+        // Directly mutate state for tests
+        td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_LOAD', payload });
+        // Since space has a closure which refers to the state
+        // we should be readable from everywhere
+        expect(td.dataset().activity().find(a => a.id.item_id === td.datasetact.itemid())).toBeTruthy();
+      })
+  ));
+
   it('Can be read back from dataset', () => {
     expect(td.dataset()).toBeTruthy();
     expect(td.dataset().activity().find(a => a.id.item_id === td.datasetact.itemid())).toBeTruthy();

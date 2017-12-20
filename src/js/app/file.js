@@ -140,7 +140,6 @@ export default class File extends Base {
    */
   static create(dataset, name, description, contentType, size, content) {
     let id;
-    let indexFile = false;
     if (dataset === undefined) {
       return Promise.reject('dataset undefined');
     }
@@ -151,7 +150,6 @@ export default class File extends Base {
       }
     } else {
       id = dataset.id;
-      indexFile = true;
     }
     if (name === undefined) {
       return Promise.reject('name undefined');
@@ -176,15 +174,9 @@ export default class File extends Base {
               const encoder = new TextEncoder('utf8');
               const buf = encoder.encode(content).buffer; // TextEncoder returns UInt8Array
               f.setRawContent(buf);
-              if (indexFile) {
-                dataset.addFileToIndex(f);
-              }
               resolve(f);
             } else if (content.constructor.name === 'ArrayBuffer' || content instanceof ArrayBuffer) {
               f.setRawContent(content);
-              if (indexFile) {
-                dataset.addFileToIndex(f);
-              }
               resolve(f);
             } else if (content.constructor.name === 'File' || content instanceof File) {
               const fr = new FileReader();
@@ -201,22 +193,14 @@ export default class File extends Base {
                   // at this point f.getRawContent() will contain uncompressed data (might still be archived tho)
                   return p.then(() => {
                     if (!isArchiveFile(f.name)) {
-                      if (indexFile) {
-                        dataset.addFileToIndex(f); // simple file
-                      }
                       resolve(f);
-                    } else if (indexFile) {
+                    } else {
                       const toAdd = [];
                       const toRemove = [];
                       console.log(`${Date.now()} - will expand local archive=${f.name} ...`);
 
                       return dataset._expandArchive(f, toAdd, toRemove)
                         .then(() => {
-                          // index files
-                          toAdd.forEach(dataset.addFileToIndex.bind(dataset));
-
-                          // remove/add files
-                          dataset._updateFiles(toAdd, toRemove);
                           resolve(f);
                         });
                     }
@@ -268,7 +252,7 @@ export default class File extends Base {
         });
         if (Spaces.initialized()) {
           let ret = [...files];
-          // download and index files in the DS
+          // download files in the DS
           // TODO; move this to a bg task
           const startTime = Date.now();
           console.log(`${startTime} - download start`);

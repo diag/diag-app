@@ -1,5 +1,4 @@
 import { getDataset, getDatasets, postDataset, patchDataset } from '../api/datasets';
-import { Index } from 'diag-search';
 import Spaces from './spaces';
 import Space from './space';
 import Base from './base';
@@ -27,63 +26,6 @@ export default class Dataset extends Base {
    * @returns {string}
    */
   static url(did) { return did === undefined || did.space_id === undefined || did.item_id === undefined ? undefined : `/dataset/${did.space_id}/${did.item_id}`; }
-
-  _initIndex() {
-    if (this._index) {
-      return;
-    }
-    this._index = new Index();
-  }
-
-  static addFileToIndex(index, f, breaker) {
-    breaker = breaker || (f.parse || {}).breaker || '\n';
-    const tokenizer = /[^a-zA-Z0-9_]+/;
-
-    let skip = false;
-    ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.pyc', '.pyo', '.tar', '.tgz', '.gz']
-      .forEach((ext) => {
-        skip |= f.name.endsWith(ext);
-      });
-
-    // TODO: index only files that look like text ...
-    if (!skip) {
-      index = index || new Index();
-      index.add(f.id.item_id, f.content(), new RegExp(breaker, 'g'), tokenizer);
-    }
-    return index;
-  }
-
-  resetIndex() {
-    delete this._index;
-  }
-
-  addFileToIndex(f) {
-    this._index = Dataset.addFileToIndex(this._index, f);
-  }
-
-  removeFileFromIndex(f) {
-    if (this._index) {
-      this._index.removeBySource(f.id.item_id);
-    }
-  }
-
-  /**
-   * Indexes files currently loaded in the dataset
-   */
-  index() {
-    const ret = this.copy();
-    const startTime = Date.now();
-    console.log(`${startTime} - index start`);
-    ret._initIndex();
-    // index the files
-    ret.resetIndex(); // reset index in case we're reloading
-    ret.files().forEach((f) => {
-      ret.addFileToIndex(f);
-    });
-    const endTime = Date.now();
-    console.log(`${endTime} - index done in ${endTime - startTime} ms`);
-    return Promise.resolve(ret);
-  }
 
   /**
    * Fetches a dataset from the API by id

@@ -91,7 +91,7 @@ export default class Activity extends Base {
     if (parent instanceof Space || id._type === 'space') {
       ret = getSpaceActivity(id.item_id);
     } else if (parent instanceof Dataset || id._type === 'dataset') {
-      ret = getDatasetActivity(id.item_id);
+      ret = getDatasetActivity(id.space_id, id.item_id);
     }
     return ret
       .then(payload => (

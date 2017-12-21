@@ -40,7 +40,7 @@ export default class Dataset extends Base {
     const tokenizer = /[^a-zA-Z0-9_]+/;
 
     let skip = false;
-    ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.pyc', '.pyo', '.tar', '.tgz', '.gz']
+    ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.pyc', '.pyo', '.tar', '.tgz', '.tar.gz']
       .forEach((ext) => {
         skip |= f.name.endsWith(ext);
       });

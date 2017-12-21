@@ -1,7 +1,7 @@
 {
   "name": "diag-app",
   "description": "Diag app library",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "main": "dist/js/index.js",
   "scripts": {
     "init": "mkdir dist",

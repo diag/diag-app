@@ -250,51 +250,8 @@ export default class File extends Base {
           }
           return mf;
         });
-        if (Spaces.initialized()) {
-          let ret = [...files];
-          // download files in the DS
-          // TODO; move this to a bg task
-          const startTime = Date.now();
-          console.log(`${startTime} - download start`);
-          const downloads = [];
-
-          const filesToAdd = [];
-          const filesToRemove = [];
-          files.forEach((f) => {
-            downloads.push(
-              f.load()
-                .then((newf) => {
-                  console.log(`${Date.now()} - downloaded file=${f.name}`);
-                  f.setRawContent(newf.rawContent()); // copy content from newF
-                  return File._expandArchive(newf, filesToAdd, filesToRemove);
-                }).catch((err) => {
-                  console.error(`Failed to load contents of dataset=${dataset.name}, file=${f.name}, err=${err}`);
-                })
-            );
-          });
-          return Promise.all(downloads)
-            .then(() => {
-              // remove/add files
-              ret = [...ret, ...filesToAdd].filter(f => filesToRemove.findIndex(fr => isEqual(fr.id, f.id)) === -1);
-              // ret._updateFiles(filesToAdd, filesToRemove);
-            })
-            .then(() => {
-              const endTime = Date.now();
-              console.log(`${endTime} - download done in ${endTime - startTime} ms`);
-            })
-            .then(() => (Promise.resolve(ret)));
-        }
         return files;
       });
-    // return getFiles(this.space().itemid(), this.itemid())
-    //   .then(payload => (
-    //     checkEmpty(payload, () => {
-    //       const ret = this.copy();
-    //       ret._files = payload.items.map(f => new File(ret, f)).reduce((files, f) => { files[f.itemid()] = f; return files; }, {});
-    //       return ret;
-    //       // return new Promise(resolve => resolve(ret));
-    //     })
-    //   ));
   }
 
   /* eslint prefer-template: off */

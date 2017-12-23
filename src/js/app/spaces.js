@@ -13,6 +13,13 @@ let _apiHost = 'https://app.diag.ai';
 let _apiBase = '/api/v1';
 let _initialized = false;
 
+const ACTIONS = {
+  DIAG_CREATE: 'storeInsert',
+  DIAG_UPDATE: 'storeUpdate',
+  DIAG_DELETE: 'storeDelete',
+  DIAG_LOAD:   'storeLoad',
+  DIAG_ERROR: 'error',
+};
 /** Top level class representing all spaces we have access to */
 export default class Spaces {
   /**
@@ -308,10 +315,10 @@ export default class Spaces {
    */
   static reduce(state = new Spaces(), action) {
     if (!action || !(action.payload || action.error)) return state;
-    if (action.type !== 'DIAG_CREATE' && action.type !== 'DIAG_UPDATE'
-        && action.type !== 'DIAG_DELETE' && action.type !== 'DIAG_LOAD' && action.type !== 'DIAG_ERROR') {
-      return state;
-    }
+
+    const actMethod = ACTIONS[action.type];
+    if (actMethod === undefined) return state;
+
     let ret;
     if (state.constuctor) {
       ret = Object.create(state.constructor.prototype);
@@ -322,25 +329,16 @@ export default class Spaces {
       Object.assign(ret, state, { error: action.error, status: action.status });
       return ret;
     }
-    switch (action.type) {
-    case 'DIAG_CREATE':
-      Object.assign(ret, state, action.payload.storeInsert());
-      break;
-    case 'DIAG_UPDATE':
-      Object.assign(ret, state, action.payload.storeUpdate());
-      break;
-    case 'DIAG_DELETE':
-      Object.assign(ret, state, action.payload.storeDelete());
-      break;
-    case 'DIAG_LOAD':
-      if (Array.isArray(action.payload) && action.payload.length === 0) {
-        return state;
-      }
-      Object.assign(ret, state, action.payload[0].storeLoad(action.payload));
-      break;
-    default:
-      break;
+
+    let payload  = action.payload;
+    if (Array.isArray(payload) && payload.length === 0) {
+      return state;
+    } else if (!Array.isArray(payload)) {
+      payload = [action.payload];
     }
+
+    Object.assign(ret, state, payload[0][actMethod](payload));
+
     ret.version = state.version + 1;
     return ret;
   }

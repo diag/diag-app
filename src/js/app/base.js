@@ -195,16 +195,18 @@ export default class Base {
    * Inserts this item into a copy of its parent
    * @returns {Diag}
    */
-  storeInsert() {
+  storeInsert(objs) {
     const ret = this._store().copy();
     const key = this._getKey();
     const selfs = this._getSelfs();
-    const itemIdx = this._findSelfIndex();
-    if (itemIdx === -1) {
-      ret[key] = [...selfs, this];
-    } else {
-      ret[key] = [...selfs];
+
+    if(!objs) {
+      objs = [this];
     }
+    // now work on items in objs
+
+    objs = objs.filter(o => selfs.findIndex(s => isEqual(o.id,s.id)) === -1);
+    ret[key] = [...selfs, ...objs];
     return ret;
   }
 
@@ -230,16 +232,25 @@ export default class Base {
    * Updates an item in a copy of its parent
    * @returns {Diag}
    */
-  storeUpdate() {
-    const insert = this.copy();
+  storeUpdate(objs) {
     const ret = this._store().copy();
     const selfs = this._getSelfs();
-    const itemIdx = this._findSelfIndex();
-    if (itemIdx > -1) {
-      ret[this._getKey()] = [...selfs.slice(0, itemIdx), insert, ...selfs.slice(itemIdx + 1)];
-    } else {
-      ret[this._getKey()] = [...selfs];
+    const key = this._getKey();
+
+    if(!objs) {
+      objs = [this];
     }
+    // now work on items in objs
+
+    // copy and update in place
+    const list = [...selfs];
+    objs.forEach(o => {
+      const itemIdx = list.findIndex(s => isEqual(o.id, s.id));
+      if(itemIdx > -1) {
+        list[itemIdx] = o.copy();
+      }
+    });
+    ret[key] = list;
     return ret;
   }
 
@@ -247,16 +258,16 @@ export default class Base {
    * Deletes an item in a copy of its parent
    * @returns {Diag}
   */
-  storeDelete() {
+  storeDelete(objs) {
     const ret = this._store().copy();
     const key = this._getKey();
     const selfs = this._getSelfs();
-    const itemIdx = this._findSelfIndex();
-    if (itemIdx > -1) {
-      ret[key] = [...selfs.slice(0, itemIdx), ...selfs.slice(itemIdx + 1)];
-    } else {
-      ret[this._getKey()] = [...selfs];
+
+    if(!objs) {
+      objs = [this];
     }
+
+    ret[key] = selfs.filter(s => objs.findIndex(o => isEqual(o.id, s.id)) === -1);
     return ret;
   }
 

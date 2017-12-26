@@ -11,13 +11,9 @@
     "test": "NODE_ENV=test node_modules/.bin/jest -i"
   },
   "dependencies": {
-    "compression": "^1.6.2",
-    "jszip": "^3.1.4",
     "lodash": "^4.17.4",
-    "query-string": "^5.0.1",
     "redux": "^3.6.0",
     "redux-thunk": "^2.1.0",
-    "tar-stream": "^1.5.4",
     "text-encoding": "^0.6.4"
   },
   "repository": {

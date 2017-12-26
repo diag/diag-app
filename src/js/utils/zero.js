@@ -1,5 +1,41 @@
 // NO! YOU CAN'T IMPORT SHIT !
 
+let _apiHost = 'https://app.diag.ai';
+let _apiBase = '/api/v1';
+
+export function setApiHost(url) {
+  _apiHost = url;
+}
+
+export function setApiBase(base) {
+  _apiBase = base;
+}
+
+/**
+ * Retrieives the API URL
+ * @returns {string}
+ */
+export function apiUrl() {
+  return `${_apiHost}${_apiBase}`;
+}
+
+/**
+ * Retrieves the API Host - defaults to https://app.diag.ai/
+ * @returns {string}
+ */
+export function apiHost() {
+  return _apiHost;
+}
+
+/**
+ * Retrieives the API base, e.g. '/api/v1'
+ * @returns {string}
+ */
+export function apiBase() {
+  return _apiBase;
+}
+
+
 function randomTextNoDeps(len) {
   let text = '';
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

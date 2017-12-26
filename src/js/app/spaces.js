@@ -1,5 +1,5 @@
 import { getAllSpaces } from '../api/datasets';
-import { updateHeaders, getSessionId } from '../utils/apiutils';
+import { updateHeaders, getSessionId, setApiHost, setApiBase, apiHost, apiUrl, apiBase } from '../utils/apiutils';
 import Space from './space';
 import Dataset from './dataset';
 import File from './file';
@@ -9,8 +9,6 @@ import User from './user';
 
 let _store;
 let _dispatch;
-let _apiHost = 'https://app.diag.ai';
-let _apiBase = '/api/v1';
 let _initialized = false;
 
 const ACTIONS = {
@@ -47,7 +45,7 @@ export default class Spaces {
    * @param {string} url - API Host, defaults to https://app.diag.ai
    */
   static setApiHost(url) {
-    _apiHost = url;
+    setApiHost(url)
   }
 
   /**
@@ -55,7 +53,7 @@ export default class Spaces {
    * @param {string} base - API url base, defaults to /api/v1
    */
   static setApiBase(base) {
-    _apiBase = base;
+    setApiBase(base);
   }
 
   /**
@@ -75,7 +73,7 @@ export default class Spaces {
    * @returns {string}
    */
   static apiUrl() {
-    return `${_apiHost}${_apiBase}`;
+    return apiUrl();
   }
 
   /**
@@ -83,7 +81,15 @@ export default class Spaces {
    * @returns {string}
    */
   static apiHost() {
-    return _apiHost;
+    return apiHost();
+  }
+
+  /**
+   * Retrieives the API base, e.g. '/api/v1'
+   * @returns {string}
+   */
+  static apiBase() {
+    return apiBase();
   }
 
   /**

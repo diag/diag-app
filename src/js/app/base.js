@@ -159,6 +159,9 @@ export default class Base {
    * Child files
    */
   files() {
+    if (!this.id) {
+      return [];
+    }
     const datasetId = this.id.dataset_id ? this.id.dataset_id : this.id.item_id;
     const spaceId = this.id.space_id;
     if (!datasetId || !spaceId) {

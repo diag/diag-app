@@ -1,5 +1,21 @@
 // NO! YOU CAN'T IMPORT SHIT !
 
+function randomTextNoDeps(len) {
+  let text = '';
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+  for (let i = 0; i < len; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}
+
+const _sessionId = randomTextNoDeps(8);
+
+export function getSessionId() {
+  return _sessionId;
+}
+
 let _headers = {
   Accept: 'application/json',
   'Content-Type': 'application/json'
@@ -11,7 +27,7 @@ export function headers() {
 
 export function getOptions(extra) {
   return Object.assign({
-    headers: headers(),
+    headers: { ...headers(), 'X-Request-Id': `${_sessionId}-${randomTextNoDeps(8)}` },
     credentials: 'same-origin',
   }, extra);
 }

@@ -1,5 +1,5 @@
 import { getAllSpaces } from '../api/datasets';
-import { updateHeaders } from '../utils/apiutils';
+import { updateHeaders, getSessionId } from '../utils/apiutils';
 import Space from './space';
 import Dataset from './dataset';
 import File from './file';
@@ -102,6 +102,12 @@ export default class Spaces {
    * @returns {bool}
    */
   static initialized() { return _initialized; }
+
+  /**
+   * Returns a randomly generated sessionId
+   * @returns {string}
+   */
+  static sessionId() { return getSessionId(); }
 
   /**
    * Returns a copy of Spaces

@@ -203,12 +203,12 @@ export default class Base {
     const key = this._getKey();
     const selfs = this._getSelfs();
 
-    if(!objs) {
+    if (!objs) {
       objs = [this];
     }
     // now work on items in objs
 
-    objs = objs.filter(o => selfs.findIndex(s => isEqual(o.id,s.id)) === -1);
+    objs = objs.filter(o => selfs.findIndex(s => isEqual(o.id, s.id)) === -1);
     ret[key] = [...selfs, ...objs];
     return ret;
   }
@@ -240,7 +240,7 @@ export default class Base {
     const selfs = this._getSelfs();
     const key = this._getKey();
 
-    if(!objs) {
+    if (!objs) {
       objs = [this];
     }
     // now work on items in objs
@@ -249,7 +249,7 @@ export default class Base {
     const list = [...selfs];
     objs.forEach(o => {
       const itemIdx = list.findIndex(s => isEqual(o.id, s.id));
-      if(itemIdx > -1) {
+      if (itemIdx > -1) {
         list[itemIdx] = o.copy();
       }
     });
@@ -266,7 +266,7 @@ export default class Base {
     const key = this._getKey();
     const selfs = this._getSelfs();
 
-    if(!objs) {
+    if (!objs) {
       objs = [this];
     }
 

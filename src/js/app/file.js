@@ -2,14 +2,11 @@ import {
   getFileContent, uploadFile, getFiles, patchFile, getFile,
 } from '../api/datasets';
 import { AssetId } from '../utils';
-import { props, isArchiveFile, gunzipIfNeeded, isZipArchive, isTarArchive, StrStream, checkEmpty } from '../utils/apputils';
-import { extract } from 'tar-stream';
-import JSZip from 'jszip';
+import { props, gunzipIfNeeded, checkEmpty } from '../utils/apputils';
 import Spaces from './spaces';
 import Dataset from './dataset';
 import Base from './base';
 import { TextEncoder, TextDecoder } from 'text-encoding';
-import isEqual from 'lodash/fp/isEqual';
 
 /* global FileReader */
 /* eslint consistent-return: off */
@@ -181,31 +178,16 @@ export default class File extends Base {
             } else if (content.constructor.name === 'File' || content instanceof File) {
               const fr = new FileReader();
               fr.onloadend = (evt) => {
-                if (evt.target.readyState === FileReader.DONE) { // DONE == 2
+                if (evt.target.readyState === FileReader.DONE) {
                   // check to see if we need to decompress file ...
-                  const p = new Promise((res) => {
+                  return new Promise(res => {
                     gunzipIfNeeded(f.name, fr.result, (err, buf) => {
                       f.setRawContent(buf);
-                      res();
+                      res(f);
                     });
-                  });
-
-                  // at this point f.getRawContent() will contain uncompressed data (might still be archived tho)
-                  return p.then(() => {
-                    if (!isArchiveFile(f.name)) {
-                      resolve(f);
-                    } else {
-                      const toAdd = [];
-                      const toRemove = [];
-                      console.log(`${Date.now()} - will expand local archive=${f.name} ...`);
-
-                      return dataset._expandArchive(f, toAdd, toRemove)
-                        .then(() => {
-                          resolve(f);
-                        });
-                    }
-                  });
+                  }).then(() => { resolve(f); });
                 }
+                return Promise.reject(`received onloadend with readyState=${evt.target.readyState}, file=${f.name}`);
               };
               fr.readAsArrayBuffer(content);
             } else {
@@ -252,102 +234,6 @@ export default class File extends Base {
         });
         return files;
       });
-  }
-
-  /* eslint prefer-template: off */
-  static _expandArchive(f, toAdd, toRemove) {
-    if (!isArchiveFile(f.name)) {
-      return Promise.resolve('regular-file');
-    }
-
-    const addFileFromArchive = (name, bytes, size) => {
-      const nf = f.copy();
-      nf.id = Object.assign({}, f.id);
-      nf.setRawContent(bytes);
-      nf.id.item_id += ':' + toAdd.length;
-      nf.name = f.name + '/' + name;
-      nf.size = size;
-      toAdd.push(nf);
-    };
-
-    if (isZipArchive(f.name)) {
-      toRemove.push(f);
-      return new Promise((resolve, reject) => {
-        console.log(`processing zip archive, file=${f.name} ... `);
-        JSZip.loadAsync(f.rawContent())
-          .catch((err) => {
-            reject(err);
-          })
-          .then((zip) => {
-            const promises = [];
-            zip.forEach((path, zipFile) => {
-              if (zipFile.dir) {
-                return; // nop
-              }
-              console.log(`${Date.now()} - start zipentry=${zipFile.name}...`);
-              promises.push(
-                zipFile.async('uint8array')
-                  .catch((err) => {
-                    reject(err);
-                  })
-                  .then((u8) => {
-                    addFileFromArchive(zipFile.name, u8.buffer, u8.byteLength);
-                    console.log(`${Date.now()} - end zip entry=${zipFile.name}, size=${u8.byteLength} ...`);
-                  })
-              );
-            });
-            Promise.all(promises)
-              .then(() => {
-                resolve('zip-archive-file-done');
-              });
-          });
-      });
-    }
-
-    if (isTarArchive(f.name)) {
-      toRemove.push(f);
-      return new Promise((resolve, reject) => {
-        const ext = extract();
-        ext.on('entry', (header, stream, next) => {
-          console.log(`${Date.now()} - start tar entry=${header.name}...`);
-          const bytes = new ArrayBuffer(header.size);
-          const content = new Uint8Array(bytes);
-          let len = 0;
-          stream.on('end', () => {
-            if (header.size > 0 && header.type !== 'directory') {
-              addFileFromArchive(header.name, bytes, header.size);
-            }
-            console.log(`${Date.now()} - end tar entry=${header.name}, size=${header.size} ...`);
-            next(); // ready for next entry
-          });
-
-          stream.resume()
-            .on('data', (d) => {
-              content.set(d, len);
-              len += d.byteLength;
-            });
-        });
-
-        // all entries read
-        ext.on('finish', () => {
-          resolve('tar-archive-file-done');
-        });
-
-        ext.on('error', (err) => {
-          reject(err);
-        });
-
-
-        // NOTE: raw content will be decompressed already, due to content-encoding being set to gzip
-        // however in some cases/browsers depending on content-type the contents might NOT be decompressed
-        gunzipIfNeeded(f.name, f.rawContent(), (err, buf) => {
-          const s = new StrStream(buf);
-          s.pipe(ext);
-        });
-      });
-    }
-
-    return Promise.reject(`unsupported archive file=${f.name}, likely a bug`);
   }
 
   /**

@@ -39,6 +39,8 @@ export default class File extends Base {
 
   rawContent() { return this._rawContent; }
 
+  rawContentSize() { return this._rawContent ? this._rawContent.byteLength : 0; }
+
   /**
    * Returns URL for this file
    * @returns {string}

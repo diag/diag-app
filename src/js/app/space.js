@@ -8,7 +8,7 @@ import Base from './base';
 export default class Space extends Base {
   constructor(space) {
     super(Spaces.store);
-    Object.assign(this, space);
+    Object.assign(this, space, {_store: Spaces.store});
   }
 
   /**

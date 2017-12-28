@@ -11,7 +11,7 @@ export default class Dataset extends Base {
    */
   constructor(dataset) {
     super(Spaces.store);
-    Object.assign(this, dataset);
+    Object.assign(this, dataset, {_store: Spaces.store});
   }
 
   /**

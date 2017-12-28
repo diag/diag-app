@@ -4,11 +4,11 @@ import isEqual from 'lodash/fp/isEqual';
 export default class Base {
   constructor(store) {
     // _store is a function which will return Spaces
-    this.initialized = false;
     this._store = store;
-    if (typeof this._store === 'function') {
-      this.initialized = true;
-    }
+  }
+
+  get initialized(){
+    return (typeof this._store === 'function');
   }
 
   /**
@@ -24,6 +24,12 @@ export default class Base {
   copy() {
     const ret = Object.create(this.constructor.prototype);
     Object.assign(ret, this);
+    return ret;
+  }
+
+  toSerializable(){
+    const ret = Object.assing({}, this);
+    delete ret._store; // can't be serialized
     return ret;
   }
 

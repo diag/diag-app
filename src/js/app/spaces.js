@@ -11,13 +11,16 @@ let _store;
 let _dispatch;
 let _initialized = false;
 
+/* eslint key-spacing: off */
 const ACTIONS = {
   DIAG_CREATE: 'storeInsert',
   DIAG_UPDATE: 'storeUpdate',
   DIAG_DELETE: 'storeDelete',
   DIAG_LOAD:   'storeLoad',
-  DIAG_ERROR: 'error',
+  DIAG_ERROR:  'error',
 };
+/* eslint: key-spacing: on */
+
 /** Top level class representing all spaces we have access to */
 export default class Spaces {
   /**
@@ -342,7 +345,7 @@ export default class Spaces {
       return ret;
     }
 
-    let payload  = action.payload;
+    let payload = action.payload;
     if (Array.isArray(payload) && payload.length === 0) {
       return state;
     } else if (!Array.isArray(payload)) {

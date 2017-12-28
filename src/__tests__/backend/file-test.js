@@ -198,6 +198,18 @@ describe('App Files', () => {
         expect(ret).toBe(td.f1orig.content);
       });
   });
+
+  it('should delete and not return from API', () => {
+    return td.file2.delete()
+      .then((f) => {
+        expect(f.id.item_id).toBe(td.file2.id.item_id);
+        const deleteIdStr = new AssetId(td.file2.id).toString();
+        return File.load(deleteIdStr);
+      })
+      .catch((err) => {
+        expect(err.status).toBe(404);
+      });
+  });
 });
 
 describe('Redux Files', () => {

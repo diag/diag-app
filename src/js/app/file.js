@@ -1,5 +1,5 @@
 import {
-  getFileContent, uploadFile, getFiles, patchFile, getFile,
+  getFileContent, uploadFile, getFiles, patchFile, getFile, deleteFile
 } from '../api/datasets';
 import { AssetId } from '../utils';
 import { props, gunzipIfNeeded, checkEmpty } from '../utils/apputils';
@@ -246,6 +246,22 @@ export default class File extends Base {
       .then((payload) => {
         if (payload.count > 0) {
           // HACK shouldn't mutate existing state, but this saves us from having to reload the whole dataset from the server
+          const ret = this.copy();
+          Object.assign(ret, payload.items[0]);
+          return Promise.resolve(ret);
+        }
+        return Promise.reject('Empty result set');
+      });
+  }
+
+  /**
+   * Deletes a file with the API
+   * @returns {$Promise<File>}
+   */
+  delete() {
+    return deleteFile(this.id.space_id, this.id.dataset_id, this.id.item_id)
+      .then((payload) => {
+        if (payload.count > 0) {
           const ret = this.copy();
           Object.assign(ret, payload.items[0]);
           return Promise.resolve(ret);

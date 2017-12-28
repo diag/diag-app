@@ -1,5 +1,5 @@
 import { Spaces } from '../app';
-import { parseJSON, baseGet, basePost, basePatch, putOptions, resolveUserId } from '../utils/apiutils';
+import { parseJSON, baseGet, basePost, basePatch, baseDelete, putOptions, resolveUserId } from '../utils/apiutils';
 
 function processResponse(type, p) {
   return p.then(resolveUserId)
@@ -103,4 +103,8 @@ export function getFileContent(sid, datasetId, fileId) {
       };
       return fetch(payload.signed_url, downloadOptions);
     });
+}
+
+export function deleteFile(sid, datasetId, fileId) {
+  return run('file', baseDelete, `${sid}/${datasetId}/${fileId}`);
 }

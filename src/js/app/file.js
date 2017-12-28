@@ -19,7 +19,7 @@ export default class File extends Base {
    */
   constructor(file) {
     super(Spaces.store);
-    Object.assign(this, file, {_store: Spaces.store});
+    Object.assign(this, file, { _store: Spaces.store });
   }
 
   /**

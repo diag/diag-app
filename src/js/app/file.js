@@ -108,7 +108,11 @@ export default class File extends Base {
       .then((payload) => {
         ret = payload;
         if (download) {
-          return getFileContent(id.space_id, id.dataset_id, id.item_id)
+          const dlOptions = {};
+          if (payload.content_type === 'application/gzip') {
+            dlOptions.compress = false;
+          }
+          return getFileContent(id.space_id, id.dataset_id, id.item_id, dlOptions)
             .then((res) => {
               if (stream) {
                 res.body.pipe(stream);

@@ -93,13 +93,17 @@ export function uploadFile(sid, datasetId, name, description, contentType, size,
 }
 
 
-export function getFileContent(sid, datasetId, fileId) {
+export function getFileContent(sid, datasetId, fileId, options) {
+  if (options === undefined) {
+    options = {};
+  }
   return baseGet(`${Spaces.apiUrl()}/files/${sid}/${datasetId}/${fileId}/download_url`)
     .then((payload) => {
       const downloadOptions = {
         headers: payload.http_headers,
         method: payload.http_method,
         credentials: 'same-origin',
+        ...options,
       };
       return fetch(payload.signed_url, downloadOptions);
     });

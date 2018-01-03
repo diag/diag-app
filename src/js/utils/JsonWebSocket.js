@@ -32,7 +32,7 @@ export default class JsonWebSocket {
    * a WebSocket - if the default send() and addEventListener('messge' ...) are used, then the default event type will be used
    * @param {Number} keepAliveSec - send keep alive messages every this many seconds, set to 0 to disable keep alive messages
    */
-  constructor(ws, defaultType, keepAliveSec=30) {
+  constructor(ws, defaultType, keepAliveSec = 30) {
     this.conn = ws;
     this.defaultType = defaultType;
 
@@ -53,28 +53,28 @@ export default class JsonWebSocket {
     this.conn.addEventListener('open', () => { this._setupKeepAlive(keepAliveSec); this._dispatch('open', null); });
 
     // in case socket is already 'open'
-    this._setupKeepAlive(keepAlive);
+    this._setupKeepAlive(keepAliveSec);
   }
 
   _setupKeepAlive(keepAliveSec) {
     if (!this.keepAliveInt && keepAliveSec > 0 && this.conn.readyState === 1 /*OPEN*/) {
       this.keepAliveInt = setInterval(() => {
-        try{
-          send('_keepalive', {});
-        }catch(ignore){}
-      }, keepAliveSec*1000);
+        try {
+          this.send('_keepalive', {});
+        } catch (ignore) {}
+      }, keepAliveSec * 1000);
     }
   }
 
-  _teardownKeepAlive(){
-    if(this.keepAliveInt) {
+  _teardownKeepAlive() {
+    if (this.keepAliveInt) {
       clearInterval(this.keepAliveInt);
       this.keepAliveInt = undefined;
     }
   }
 
   _dispatch(type, data) {
-    if(type === '_keepalive') {
+    if (type === '_keepalive') {
       return; // noop, ignore
     }
     (this.callbacks[type] || []).forEach(cb => {

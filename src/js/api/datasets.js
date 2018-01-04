@@ -54,6 +54,10 @@ export function patchDataset(sid, datasetId, name, description, tags, problem, r
   return run('dataset', basePatch, `${sid}/${datasetId}`, { name, description, tags, problem, resolution });
 }
 
+export function deleteDataset(sid, datasetId) {
+  return run('dataset', baseDelete, `${sid}/${datasetId}`);
+}
+
 
 ////// file
 

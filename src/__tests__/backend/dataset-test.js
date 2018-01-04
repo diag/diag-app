@@ -71,7 +71,7 @@ describe('App Datasets', () => {
     ));
 
     it('Can save dataset 2', (done) => {
-      Dataset.create(td.space(), td.d2orig.name, td.d2orig.description, td.d2orig.tags, td.d2orig.problem, td.d2orig.resolution)
+      Dataset.create(td.space().id.item_id, td.d2orig.name, td.d2orig.description, td.d2orig.tags, td.d2orig.problem, td.d2orig.resolution)
         .then((payload) => {
           td.dataset2Id = payload.itemid();
           expect(td.dataset2Id).toBeTruthy();
@@ -208,6 +208,19 @@ describe('App Datasets', () => {
           expect(td.spaces.dataset(sid, did).name).not.toBe(ds1.name);
           td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_UPDATE', payload: newds1 });
           expect(td.spaces.dataset(sid, did).name).toBe(ds1.name);
+        });
+    });
+
+    it('Can delete a dataset', () => {
+      td.dataset2.delete()
+        .then((newds2) => {
+          expect(td.dataset2.name).toBe(newds2.name);
+          expect(td.dataset2.id.item_id).toBe(newds2.id.item_id);
+          td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_DELETE', payload: newds2 });
+          return Dataset.load(td.dataset2.id.space_id, td.dataset2.id.item_id);
+        })
+        .catch((err) => {
+          expect(err.status).toBe(404);
         });
     });
 

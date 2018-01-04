@@ -1,4 +1,5 @@
-import { getDataset, getDatasets, postDataset, patchDataset } from '../api/datasets';
+import { getDataset, getDatasets, postDataset, patchDataset, deleteDataset } from '../api/datasets';
+import { AssetId } from '../utils';
 import Spaces from './spaces';
 import Space from './space';
 import Base from './base';
@@ -48,7 +49,7 @@ export default class Dataset extends Base {
 
   /**
    * Saves dataset to the API
-   * @param {Space} space - Space object of parent
+   * @param {(Space|string)} spaceOrSpaceId - Space object of parent or space ID
    * @param {string} name - Name of dataset
    * @param {string} [description] - Description of dataset (optional)
    * @param {string[]} [tags] - Tags describing dataset
@@ -57,11 +58,17 @@ export default class Dataset extends Base {
    * @returns {Promise<Dataset>}
    */
   static create(space, name, description, tags, problem, resolution) {
+    let id;
     if (space === undefined) {
       return Promise.reject('space undefined');
     }
     if (!(space instanceof Space)) {
-      return Promise.reject('space is not Space object');
+      id = space;
+      if (typeof id !== 'string') {
+        return Promise.reject('space is not Space object or a space ID');
+      }
+    } else {
+      id = space.id.item_id;
     }
     if (name === undefined) {
       return Promise.reject('name undefined');
@@ -69,7 +76,7 @@ export default class Dataset extends Base {
     if (!Array.isArray(tags) && tags !== undefined) {
       return Promise.reject('tags is not an array');
     }
-    return postDataset(space.id.item_id, name, description, tags, problem, resolution)
+    return postDataset(id, name, description, tags, problem, resolution)
       .then((payload) => {
         if (payload.count > 0) {
           return new Promise(resolve => resolve(new Dataset(payload.items[0])));
@@ -96,5 +103,41 @@ export default class Dataset extends Base {
         }
         return Promise.reject('Empty result set');
       });
+  }
+
+  /**
+   * Deletes a dataset with the API
+   * @param {(Dataset|string)} datasetOrId - Dataset or AssetId representing a dataset
+   * @returns {Promise<Dataset>}
+   */
+  static delete(datasetOrId) {
+    let id;
+    if (datasetOrId === undefined) {
+      return Promise.reject('datasetOrId undefined');
+    }
+    if (!(datasetOrId instanceof Dataset)) {
+      id = new AssetId(datasetOrId);
+      if (!id.valid() && !(datasetOrId instanceof Dataset)) {
+        return Promise.reject('datasetOrId is not a valid Dataset object or valid AssetId');
+      }
+    } else {
+      id = datasetOrId.id;
+    }
+    return deleteDataset(id.space_id, id.item_id)
+      .then((payload) => {
+        if (payload.count > 0) {
+          const ret = new Dataset(payload.items[0]);
+          return Promise.resolve(ret);
+        }
+        return Promise.reject('Empty result set');
+      });
+  }
+
+  /**
+   * Deletes this dataset with the api
+   * @returns {Promise<Dataset>}
+   */
+  delete() {
+    return Dataset.delete(this);
   }
 }

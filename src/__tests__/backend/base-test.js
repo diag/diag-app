@@ -79,8 +79,8 @@ describe('Base properties', () => {
 
   it('props should only return the name and initialized', () => {
     t.name = 'name';
-    expect(Object.keys(t.props())).toHaveLength(2);
-    expect(t.props()).toEqual({ name: 'name', initialized: true });
+    expect(Object.keys(t.props())).toHaveLength(1);
+    expect(t.props()).toEqual({ name: 'name' });
   });
 
   it('key should be set properly', () => {

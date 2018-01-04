@@ -262,7 +262,7 @@ export default class File extends Base {
 
   /**
    * Deletes a file with the API
-   * @returns {$Promise<File>}
+   * @returns {Promise<File>}
    */
   delete() {
     return deleteFile(this.id.space_id, this.id.dataset_id, this.id.item_id)

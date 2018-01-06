@@ -16,11 +16,11 @@ before_install:
   - ssh-add github_deploy_key
   - mkdir -p /tmp/logs
 install:
-- npm install -g diag@latest | tee /tmp/logs/diag_install.log
-- npm install | tee /tmp/logs/npm_install.log
+- npm install -g diag@latest 2>&1 | tee /tmp/logs/diag_install.log
+- npm install 2>&1 | tee /tmp/logs/npm_install.log
 script:
-- npm run test | tee /tmp/logs/test.log
-- npm run build | tee /tmp/logs/build.log
+- npm run test 2>&1 | tee /tmp/logs/test.log
+- npm run build 2>&1 | tee /tmp/logs/build.log
 - sh -c "exit 1"
 after_failure:
 - diag mkds --space travis --name "${TRAVIS_REPO_SLUG:-missing_repo_name} -- Build ${TRAVIS_BUILD_NUMBER:--1}" --desc "${TRAVIS_COMMIT_MESSAGE:-missing_commit_message}" -j > /tmp/dataset.json

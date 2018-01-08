@@ -7,6 +7,7 @@ const SHORT_TYPE = {
   a: { type: 'annotation', parts: ['space_id', 'dataset_id', 'file_id', 'item_id'] },
   y: { type: 'activity', parts: ['space_id', 'dataset_id', 'file_id', 'item_id'] }, // file activity
   z: { type: 'activity', parts: ['space_id', 'dataset_id', 'item_id'] }, // dataset activity
+  x: { type: 'activity', parts: ['space_id', 'item_id'] }, // space activity
 };
 
 const SEP = '/';

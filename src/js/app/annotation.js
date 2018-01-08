@@ -42,7 +42,7 @@ export default class Annotation extends Base {
     if (length === undefined) {
       return Promise.reject('length undefined');
     }
-    return postAnnotation(file.space().itemid(), file.dataset().itemid(), file.itemid(), offset, length, description, data)
+    return postAnnotation(file.id.space_id, file.id.dataset_id, file.id.item_id, offset, length, description, data)
       .then(payload => (
         checkEmpty(payload, () => new Promise(resolve => resolve(new Annotation(file, payload.items[0]))))
       ));
@@ -60,12 +60,12 @@ export default class Annotation extends Base {
     if (!(dataset instanceof Dataset)) {
       return Promise.reject('dataset is not an instance of Dataset');
     }
-    return getAllAnnotations(dataset.space().itemid(), dataset.itemid())
+    return getAllAnnotations(dataset.id.space_id, dataset.id.item_id)
       .then(payload => {
         return payload.items.map(a => {
           const f = dataset.file(a.id.file_id);
           if (f === undefined) {
-            console.warn(`File id ${a.id.file_id} not in dataset id ${dataset.itemid()}`);
+            console.warn(`File id ${a.id.file_id} not in dataset id ${dataset.id.item_id}`);
             return undefined;
           }
           return new Annotation(f, a);
@@ -81,7 +81,7 @@ export default class Annotation extends Base {
     if (this.description === undefined) {
       return Promise.reject('description undefined');
     }
-    return patchAnnotation(this.space().itemid(), this.dataset().itemid(), this.file().itemid(), this.itemid(), this.description)
+    return patchAnnotation(this.id.space_id, this.id.dataset_id, this.id.file_id, this.id.item_id, this.description)
       .then((payload) => {
         if (payload.count > 0) {
           const ret = this.copy();
@@ -97,7 +97,7 @@ export default class Annotation extends Base {
    * @returns {Promise<Annotation>}
    */
   delete() {
-    return deleteAnnotation(this.space().itemid(), this.dataset().itemid(), this.file().itemid(), this.itemid())
+    return deleteAnnotation(this.id.space_id, this.id.dataset_id, this.id.file_id, this.id.item_id)
       .then(() => {
         return Promise.resolve(this);
       });
@@ -110,7 +110,7 @@ export default class Annotation extends Base {
     if (text === undefined || text.length === 0) {
       return Promise.reject('text must be defined');
     }
-    return postAnnotationComment(this.space().itemid(), this.dataset().itemid(), this.file().itemid(), this.itemid(), text)
+    return postAnnotationComment(this.id.space_id, this.id.dataset_id, this.id.file_id, this.id.item_id, text)
       .then((payload) => (
         checkEmpty(payload, () => simpleObjectReturn(payload, this))
       ));
@@ -126,7 +126,7 @@ export default class Annotation extends Base {
     if (text === undefined || text.length === 0) {
       return Promise.reject('text must be defined');
     }
-    return patchAnnotationComment(this.space().itemid(), this.dataset().itemid(), this.file().itemid(), this.itemid(), id, text)
+    return patchAnnotationComment(this.id.space_id, this.id.dataset_id, this.id.file_id, this.id.item_id, id, text)
       .then((payload) => (
         checkEmpty(payload, () => simpleObjectReturn(payload, this))
       ));
@@ -139,7 +139,7 @@ export default class Annotation extends Base {
     if (id === undefined || id.length === 0) {
       return Promise.reject('id must be defined');
     }
-    return deleteAnnotationComment(this.space().itemid(), this.dataset().itemid(), this.file().itemid(), this.itemid(), id)
+    return deleteAnnotationComment(this.id.space_id, this.id.dataset_id, this.id.file_id, this.id.item_id, id)
       .then((payload) => (
         simpleObjectReturn(payload, this)
       ));

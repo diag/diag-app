@@ -81,6 +81,7 @@ describe('Base properties', () => {
     t.name = 'name';
     expect(Object.keys(t.props())).toHaveLength(1);
     expect(t.props()).toEqual({ name: 'name' });
+    expect(t.initialized).toBe(true);
   });
 
   it('key should be set properly', () => {

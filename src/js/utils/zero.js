@@ -57,19 +57,26 @@ let _headers = {
   'Content-Type': 'application/json'
 };
 
+const HEADER_REQ_ID = 'X-Request-Id';
+function getRequestId(){
+  return `${_sessionId}-${randomTextNoDeps(8)}`;
+}
+
+
 export function headers() {
-  return _headers;
+  return { ..._headers,
+    [HEADER_REQ_ID]: getRequestId() };
 }
 
 export function getOptions(extra) {
   return Object.assign({
-    headers: { ...headers(), 'X-Request-Id': `${_sessionId}-${randomTextNoDeps(8)}` },
+    headers: headers(),
     credentials: 'same-origin',
   }, extra);
 }
 
 export function putOptions(extra) {
-  const h = { ...headers(), Accept: 'application/json', 'Content-Type': 'application/octet-stream' };
+  const h = { ...headers(), 'Content-Type': 'application/octet-stream' };
   return Object.assign({
     headers: h,
     method: 'PUT',
@@ -150,6 +157,11 @@ export function checkMore(payload, url, options, items) {
 }
 
 export function apiFetch(url, options, items) {
+  options = options || {};
+  if(!(options.headers || {})[HEADER_REQ_ID]) {
+    options.headers = options.headers || {};
+    options.headers[HEADER_REQ_ID] = getRequestId();
+  }
   return fetch(url, options)
     .then(parseJSON)
     .then((payload) => (checkMore(payload, url, options, items)));
@@ -159,7 +171,6 @@ export function baseGet(url) {
   const options = getOptions({
     method: 'GET',
   });
-
   return apiFetch(url, options, {});
 }
 
@@ -167,7 +178,6 @@ export function baseDelete(url) {
   const options = getOptions({
     method: 'DELETE',
   });
-
   return apiFetch(url, options, {});
 }
 
@@ -176,7 +186,6 @@ export function basePost(url, body) {
     method: 'POST',
     body: JSON.stringify(body),
   });
-
   return apiFetch(url, options, {});
 }
 
@@ -185,7 +194,6 @@ export function basePatch(url, body) {
     method: 'PATCH',
     body: JSON.stringify(body),
   });
-
   return apiFetch(url, options, {});
 }
 

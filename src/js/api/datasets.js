@@ -46,12 +46,12 @@ export function getDataset(sid, datasetId) {
   return run('dataset', baseGet, `${sid}/${datasetId}`);
 }
 
-export function postDataset(sid, name, description, tags, problem, resolution) {
-  return run('dataset', basePost, sid, { name, description, tags, problem, resolution });
+export function postDataset(sid, name, description, tags, problem, resolution, custom) {
+  return run('dataset', basePost, sid, { name, description, tags, problem, resolution, custom });
 }
 
-export function patchDataset(sid, datasetId, name, description, tags, problem, resolution) {
-  return run('dataset', basePatch, `${sid}/${datasetId}`, { name, description, tags, problem, resolution });
+export function patchDataset(sid, datasetId, name, description, tags, problem, resolution, custom) {
+  return run('dataset', basePatch, `${sid}/${datasetId}`, { name, description, tags, problem, resolution, custom });
 }
 
 export function deleteDataset(sid, datasetId) {

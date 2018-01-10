@@ -55,9 +55,10 @@ export default class Dataset extends Base {
    * @param {string[]} [tags] - Tags describing dataset
    * @param {string} [problem] - Description of the problem (optional)
    * @param {string} [resolution] - Description of the resolution (optional)
+   * @param {object} [custom] - set of custom fields (optional)
    * @returns {Promise<Dataset>}
    */
-  static create(space, name, description, tags, problem, resolution) {
+  static create(space, name, description, tags, problem, resolution, custom) {
     let id;
     if (space === undefined) {
       return Promise.reject('space undefined');
@@ -90,7 +91,7 @@ export default class Dataset extends Base {
    */
   update() {
     // update dataset itself
-    return patchDataset(this.id.space_id, this.id.item_id, this.name, this.description, this.tags, this.problem, this.resolution)
+    return patchDataset(this.id.space_id, this.id.item_id, this.name, this.description, this.tags, this.problem, this.resolution, this.custom)
       .then((payload) => {
         if (payload.count > 0) {
           // HACK shouldn't mutate existing state, but this saves us from having to reload the whole dataset from the server

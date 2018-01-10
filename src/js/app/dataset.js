@@ -77,7 +77,7 @@ export default class Dataset extends Base {
     if (!Array.isArray(tags) && tags !== undefined) {
       return Promise.reject('tags is not an array');
     }
-    return postDataset(id, name, description, tags, problem, resolution)
+    return postDataset(id, name, description, tags, problem, resolution, custom)
       .then((payload) => {
         if (payload.count > 0) {
           return new Promise(resolve => resolve(new Dataset(payload.items[0])));

@@ -21,7 +21,6 @@ install:
 script:
 - npm run test 2>&1 | tee /tmp/logs/test.log
 - npm run build 2>&1 | tee /tmp/logs/build.log
-- sh -c "exit 1"
 after_failure:
 - diag mkds --space travis --name "${TRAVIS_REPO_SLUG:-missing_repo_name} -- Build ${TRAVIS_BUILD_NUMBER:--1}" --desc "${TRAVIS_COMMIT_MESSAGE:-missing_commit_message}" -j > /tmp/dataset.json
 - cat /tmp/dataset.json | jq -r '. | "d/\(.id.space_id)/\(.id.item_id)"' > /tmp/dataset_id

@@ -28,8 +28,8 @@ export function getAllSpaces() {
   return run('space', baseGet, '');
 }
 
-export function postSpace(id, name) {
-  return run('space', basePost, '', { id, name });
+export function postSpace(id, name, publicSpace) {
+  return run('space', basePost, '', { id, name, public: publicSpace });
 }
 
 export function patchSpace(id, name) {

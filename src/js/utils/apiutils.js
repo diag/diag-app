@@ -6,14 +6,12 @@ const USERS_CACHE = new Map();
 export function getUser(uid) {
   const cached = USERS_CACHE.get(uid);
   if (cached) {
-    return Promise.resolve(cached);
+    return cached;
   }
 
-  return baseGet(`${Spaces.apiUrl()}/users/${uid}`)
-    .then((res) => {
-      USERS_CACHE.set(uid, res);
-      return res;
-    });
+  const p = baseGet(`${Spaces.apiUrl()}/users/${uid}`);
+  USERS_CACHE.set(uid, p);
+  return p;
 }
 
 export function clearCache() {

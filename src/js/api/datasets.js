@@ -28,12 +28,13 @@ export function getAllSpaces() {
   return run('space', baseGet, '');
 }
 
-export function postSpace(id, name, publicSpace) {
-  return run('space', basePost, '', { id, name, public: publicSpace });
+/* eslint camelcase: off */
+export function postSpace(id, name, publicSpace, dataset_cf_schema, dataset_cf_uischema) {
+  return run('space', basePost, '', { id, name, public: publicSpace, dataset_cf_schema, dataset_cf_uischema });
 }
 
-export function patchSpace(id, name) {
-  return run('space', basePatch, id, { name });
+export function patchSpace(id, name, dataset_cf_schema, dataset_cf_uischema) {
+  return run('space', basePatch, id, { name, dataset_cf_schema, dataset_cf_uischema });
 }
 
 ///// dataset

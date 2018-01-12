@@ -40,14 +40,16 @@ export default class Space extends Base {
    * Saves space to the API
    * @param {string} id - Space ID to create
    * @param {string} name - Space name
-   * @param {boolean} publicSpace - Public space
+   * @param {(boolean)} publicSpace - Public space
+   * @param {(object)} dataset_cf_schema - Custom Fields JSON Schema
+   * @param {(object)} dataset_cf_uischema - Custom Fields UI JSON Schema
    * @returns {Promise<Space>}
    */
-  static create(id, name, publicSpace = false) {
+  static create(id, name, publicSpace = false, dataset_cf_schema = undefined, dataset_cf_uischema = undefined) {
     if (id === undefined) {
       return Promise.reject('id undefined');
     }
-    return postSpace(id, name, publicSpace)
+    return postSpace(id, name, publicSpace, dataset_cf_schema, dataset_cf_uischema)
       .then((payload) => {
         if (payload.count > 0) {
           return Promise.resolve(new Space(payload.items[0]));
@@ -60,7 +62,7 @@ export default class Space extends Base {
    * @returns {Promise<Space>}
    */
   update() {
-    return patchSpace(this.id.item_id, this.name)
+    return patchSpace(this.id.item_id, this.name, this.dataset_cf_schema, this.dataset_cf_uischema)
       .then((payload) => {
         const ret = this.copy();
         if (payload.count > 0) {

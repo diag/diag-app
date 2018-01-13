@@ -36,6 +36,10 @@ export function apiBase() {
 }
 
 
+export function joinUri() {
+  return Array.from(arguments).map(a => encodeURIComponent(a)).join('/');
+}
+
 function randomTextNoDeps(len) {
   let text = '';
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

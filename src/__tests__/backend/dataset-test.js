@@ -211,6 +211,32 @@ describe('App Datasets', () => {
         });
     });
 
+    it('Can patch a dataset', () => {
+      const sid = td.dataset1.space().itemid();
+      const did = td.dataset1.itemid();
+      const ds1 = td.spaces.dataset(sid, did).copy();
+      const newName = 'foo';
+      Dataset.patch(ds1, {name: newName})
+        .then((newds1) => {
+          expect(td.spaces.dataset(sid, did).name).not.toBe(newName);
+          td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_UPDATE', payload: newds1 });
+          expect(td.spaces.dataset(sid, did).name).toBe(newName);
+        });
+    });
+
+    it('Can patch a dataset using AssetIt string', () => {
+      const sid = td.dataset1.space().itemid();
+      const did = td.dataset1.itemid();
+      const newName = 'foo-123';
+      Dataset.patch(`d/${sid}/${did}`, {name: newName})
+        .then((newds1) => {
+          expect(td.spaces.dataset(sid, did).name).not.toBe(newName);
+          td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_UPDATE', payload: newds1 });
+          expect(td.spaces.dataset(sid, did).name).toBe(newName);
+        });
+    });
+
+
     it('Can delete a dataset', () => {
       td.dataset2.delete()
         .then((newds2) => {

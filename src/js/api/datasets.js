@@ -1,5 +1,6 @@
 import { Spaces } from '../app';
 import { parseJSON, baseGet, basePost, basePatch, baseDelete, putOptions, resolveUserId } from '../utils/apiutils';
+import { joinUri } from '../utils';
 
 function processResponse(type, p) {
   return p.then(resolveUserId)
@@ -47,16 +48,27 @@ export function getDataset(sid, datasetId) {
   return run('dataset', baseGet, `${sid}/${datasetId}`);
 }
 
-export function postDataset(sid, name, description, tags, problem, resolution, custom) {
-  return run('dataset', basePost, sid, { name, description, tags, problem, resolution, custom });
-}
-
-export function patchDataset(sid, datasetId, name, description, tags, problem, resolution, custom) {
-  return run('dataset', basePatch, `${sid}/${datasetId}`, { name, description, tags, problem, resolution, custom });
-}
-
 export function deleteDataset(sid, datasetId) {
   return run('dataset', baseDelete, `${sid}/${datasetId}`);
+}
+
+//new API
+export function patchDatasetNew(sid, datasetId, content) {
+  return run('dataset', basePatch, joinUri(sid, datasetId), content);
+}
+
+export function postDatasetNew(sid, content) {
+  return run('dataset', basePost, sid, content);
+}
+
+//deprecated dataset API - use new API, see above
+export function postDataset(sid, name, description, tags, problem, resolution, custom) {
+  return postDatasetNew(sid, {name, description, tags, problem, resolution, custom });
+}
+
+//deprecated dataset API - use new API, see above
+export function patchDataset(sid, datasetId, name, description, tags, problem, resolution, custom) {
+  return patchDatasetNew(sid, datasetId, { name, description, tags, problem, resolution, custom });
 }
 
 

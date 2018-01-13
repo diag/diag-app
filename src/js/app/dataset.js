@@ -1,4 +1,4 @@
-import { getDataset, getDatasets, postDataset, patchDataset, deleteDataset } from '../api/datasets';
+import { getDataset, getDatasets, postDataset, patchDataset, deleteDataset, patchDatasetNew } from '../api/datasets';
 import { AssetId } from '../utils';
 import Spaces from './spaces';
 import Space from './space';
@@ -20,6 +20,29 @@ export default class Dataset extends Base {
    * @returns {string}
    */
   url() { return Dataset.url(this.id); }
+
+
+  static _newDataset(payload){
+    if (payload.count > 0) {
+      return Promise.resolve(new Dataset(payload.items[0]));
+    }
+    return Promise.reject('Empty result set');
+  }
+
+  static _id(datasetOrId) {
+    if (datasetOrId === undefined) {
+      return new Error('datasetOrId undefined');
+    }
+    if (!(datasetOrId instanceof Dataset)) {
+      const id = new AssetId(datasetOrId);
+      if (!(datasetOrId instanceof Dataset) && (id.valid && !id.valid())) {
+        return new Error('datasetOrId is not a valid Dataset object or valid AssetId');
+      }
+      return id;
+    } else {
+      return datasetOrId.id;
+    }
+  }
 
 
   /**
@@ -78,12 +101,7 @@ export default class Dataset extends Base {
       return Promise.reject('tags is not an array');
     }
     return postDataset(id, name, description, tags, problem, resolution, custom)
-      .then((payload) => {
-        if (payload.count > 0) {
-          return new Promise(resolve => resolve(new Dataset(payload.items[0])));
-        }
-        return Promise.reject('Empty result set');
-      });
+      .then(Dataset._newDataset);
   }
   /**
    * Updates dataset with the API
@@ -92,18 +110,7 @@ export default class Dataset extends Base {
   update() {
     // update dataset itself
     return patchDataset(this.id.space_id, this.id.item_id, this.name, this.description, this.tags, this.problem, this.resolution, this.custom)
-      .then((payload) => {
-        if (payload.count > 0) {
-          // HACK shouldn't mutate existing state, but this saves us from having to reload the whole dataset from the server
-          const ret = this.copy();
-          Object.assign(ret, payload.items[0]);
-          ret._files = this._files;
-          ret.files().forEach(f => f._parent = ret);
-          ret._annotations = { ...this._annotations };
-          return Promise.resolve(ret);
-        }
-        return Promise.reject('Empty result set');
-      });
+      .then(Dataset._newDataset);
   }
 
   /**
@@ -112,26 +119,21 @@ export default class Dataset extends Base {
    * @returns {Promise<Dataset>}
    */
   static delete(datasetOrId) {
-    let id;
-    if (datasetOrId === undefined) {
-      return Promise.reject('datasetOrId undefined');
-    }
-    if (!(datasetOrId instanceof Dataset)) {
-      id = new AssetId(datasetOrId);
-      if (!id.valid() && !(datasetOrId instanceof Dataset)) {
-        return Promise.reject('datasetOrId is not a valid Dataset object or valid AssetId');
-      }
-    } else {
-      id = datasetOrId.id;
+    const id = Dataset._id(datasetOrId);
+    if (id instanceof Error) {
+      return Promise.reject(id.message);
     }
     return deleteDataset(id.space_id, id.item_id)
-      .then((payload) => {
-        if (payload.count > 0) {
-          const ret = new Dataset(payload.items[0]);
-          return Promise.resolve(ret);
-        }
-        return Promise.reject('Empty result set');
-      });
+      .then(Dataset._newDataset);
+  }
+
+  static patch(datasetOrId, fields2change) {
+    const id = Dataset._id(datasetOrId);
+    if (id instanceof Error) {
+      return Promise.reject(id.message);
+    }
+    return patchDatasetNew(id.space_id, id.item_id, fields2change)
+      .then(Dataset._newDataset);
   }
 
   /**

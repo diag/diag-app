@@ -45,11 +45,11 @@ export function getDatasets(sid) {
 }
 
 export function getDataset(sid, datasetId) {
-  return run('dataset', baseGet, `${sid}/${datasetId}`);
+  return run('dataset', baseGet, joinUri(sid, datasetId));
 }
 
 export function deleteDataset(sid, datasetId) {
-  return run('dataset', baseDelete, `${sid}/${datasetId}`);
+  return run('dataset', baseDelete, joinUri(sid, datasetId));
 }
 
 //new API
@@ -76,15 +76,15 @@ export function patchDataset(sid, datasetId, name, description, tags, problem, r
 
 export function patchFile(file, patchOptions) {
   const fid = file.id;
-  return run('file', basePatch, `${fid.space_id}/${fid.dataset_id}/${fid.item_id}`, patchOptions);
+  return run('file', basePatch, joinUri(fid.space_id,  fid.dataset_id, fid.item_id), patchOptions);
 }
 
 export function getFile(sid, datasetId, fileId) {
-  return run('file', baseGet, `${sid}/${datasetId}/${fileId}`);
+  return run('file', baseGet, joinUri(sid, datasetId, fileId));
 }
 
 export function getFiles(sid, datasetId) {
-  return run('file', baseGet, `${sid}/${datasetId}`);
+  return run('file', baseGet, joinUri(sid, datasetId));
 }
 
 export function uploadFile(sid, datasetId, name, description, contentType, size, content) {
@@ -106,7 +106,7 @@ export function uploadFile(sid, datasetId, name, description, contentType, size,
     .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
     .join('&');
 
-  return processResponse('file', fetch(`${Spaces.apiUrl()}/files/${sid}/${datasetId}/upload?${query}`, options).then(parseJSON));
+  return processResponse('file', fetch(`${Spaces.apiUrl()}/${joinUri('files', sid, datasetId, 'upload')}?${query}`, options).then(parseJSON));
 }
 
 
@@ -114,7 +114,7 @@ export function getFileContent(sid, datasetId, fileId, options) {
   if (options === undefined) {
     options = {};
   }
-  return baseGet(`${Spaces.apiUrl()}/files/${sid}/${datasetId}/${fileId}/download_url`)
+  return baseGet(`${Spaces.apiUrl()}/${joinUri('files', sid, datasetId, fileId, 'download_url')}`)
     .then((payload) => {
       const downloadOptions = {
         headers: payload.http_headers,
@@ -127,5 +127,5 @@ export function getFileContent(sid, datasetId, fileId, options) {
 }
 
 export function deleteFile(sid, datasetId, fileId) {
-  return run('file', baseDelete, `${sid}/${datasetId}/${fileId}`);
+  return run('file', baseDelete, joinUri(sid, datasetId, fileId));
 }

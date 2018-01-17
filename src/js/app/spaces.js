@@ -10,6 +10,12 @@ import User from './user';
 let _store;
 let _dispatch;
 let _initialized = false;
+let _contentProvider = {
+  content: File.__content,
+  setRawContent: File.__setRawContent,
+  rawContent: File.__rawContent,
+  rawContentSize: File.__rawContentSize,
+};
 
 /* eslint key-spacing: off */
 const ACTIONS = {
@@ -48,7 +54,7 @@ export default class Spaces {
    * @param {string} url - API Host, defaults to https://app.diag.ai
    */
   static setApiHost(url) {
-    setApiHost(url)
+    setApiHost(url);
   }
 
   /**
@@ -93,6 +99,20 @@ export default class Spaces {
    */
   static apiBase() {
     return apiBase();
+  }
+
+  /**
+   * Returns callbacks for setting and getting file raw data
+   */
+  static getFileContentProvider() {
+    return _contentProvider;
+  }
+
+  /**
+   * Sets callbacks for setting and getting file raw data
+   */
+  static setFileContentProvider(cp) {
+    _contentProvider = cp;
   }
 
   /**

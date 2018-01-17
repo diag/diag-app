@@ -37,6 +37,7 @@ export default class JsonWebSocket {
     this.defaultType = defaultType;
 
     this.callbacks = {};
+    this.readyState = this.conn.readyState;
 
     // dispatch to the right handlers
     this.conn.addEventListener('message', (evt) => {
@@ -48,14 +49,15 @@ export default class JsonWebSocket {
       }
     });
 
-    this.conn.addEventListener('close', () => { this._teardownKeepAlive(); this._dispatch('close', null); });
-    this.conn.addEventListener('error', () => { this._dispatch('error', null); });
-    this.conn.addEventListener('open', () => { this._setupKeepAlive(keepAliveSec); this._dispatch('open', null); });
+    this.conn.addEventListener('close', () => { this.readyState = this.conn.readyState; this._teardownKeepAlive(); this._dispatch('close', null); });
+    this.conn.addEventListener('error', () => { this.readyState = this.conn.readyState; this._dispatch('error', null); });
+    this.conn.addEventListener('open', () => { this.readyState = this.conn.readyState; this._setupKeepAlive(keepAliveSec); this._dispatch('open', null); });
 
     // in case socket is already 'open'
     this._setupKeepAlive(keepAliveSec);
   }
 
+  /* eslint no-empty: off */
   _setupKeepAlive(keepAliveSec) {
     if (!this.keepAliveInt && keepAliveSec > 0 && this.conn.readyState === 1 /*OPEN*/) {
       this.keepAliveInt = setInterval(() => {

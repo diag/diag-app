@@ -26,20 +26,39 @@ export default class File extends Base {
    * Content of the file after being decoded
    * @returns {string}
    */
-  content(encoding = 'utf8') {
-    const decoder = new TextDecoder(encoding);
-    return decoder.decode(new DataView(this._rawContent));
-  }
+  content(...args) { return Spaces.getFileContentProvider().content(this, ...args); }
 
   /**
    * Set the contents of this file
    * @param {cont} - the content of the file as bytes
    */
-  setRawContent(cont) { this._rawContent = cont; }
+  setRawContent(...args) { return Spaces.getFileContentProvider().setRawContent(this, ...args); }
 
-  rawContent() { return this._rawContent; }
+  /**
+   * Gets the raw content of a file
+   * @returns {ArrayBuffer}
+   */
+  rawContent(...args) { return Spaces.getFileContentProvider().rawContent(this, ...args); }
 
-  rawContentSize() { return this._rawContent ? this._rawContent.byteLength : 0; }
+  /**
+   * Gets the size of the raw content
+   * @returns {number}
+   */
+  rawContentSize(...args) { return Spaces.getFileContentProvider().rawContentSize(this, ...args); }
+
+
+  // Returned from Spaces.getContentProvider as get
+  static __content(file, encoding = 'utf8') {
+    const decoder = new TextDecoder(encoding);
+    return decoder.decode(new DataView(file._rawContent));
+  }
+
+  // Returned from Spaces.getContentProvider as set
+  static __setRawContent(file, cont) { file._rawContent = cont; }
+
+  static __rawContent(file) { return file._rawContent; }
+
+  static __rawContentSize(file) { return file._rawContent ? file._rawContent.byteLength : 0; }
 
   /**
    * Returns URL for this file

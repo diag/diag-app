@@ -7,7 +7,7 @@ export default class Base {
     this._store = store;
   }
 
-  get initialized(){
+  get initialized() {
     return (typeof this._store === 'function');
   }
 
@@ -27,7 +27,7 @@ export default class Base {
     return ret;
   }
 
-  toSerializable(){
+  toSerializable() {
     const ret = Object.assign({}, this);
     delete ret._store; // can't be serialized
     return ret;

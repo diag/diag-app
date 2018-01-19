@@ -15,6 +15,8 @@ let _contentProvider = {
   setRawContent: File.__setRawContent,
   rawContent: File.__rawContent,
   rawContentSize: File.__rawContentSize,
+  hasRawContent: File.__hasRawContent,
+  clearRawContent: File.__clearRawContent,
 };
 
 /* eslint key-spacing: off */
@@ -112,7 +114,7 @@ export default class Spaces {
    * Sets callbacks for setting and getting file raw data
    */
   static setFileContentProvider(cp) {
-    _contentProvider = cp;
+    _contentProvider = { ..._contentProvider, ...cp };
   }
 
   /**

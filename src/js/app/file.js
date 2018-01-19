@@ -24,19 +24,20 @@ export default class File extends Base {
 
   /**
    * Content of the file after being decoded
-   * @returns {string}
+   * @returns {Promise<string>}
    */
   content(...args) { return Spaces.getFileContentProvider().content(this, ...args); }
 
   /**
    * Set the contents of this file
+   * @param {Promise<ArrayBuffer>} content - Promise which returns the file content
    * @param {cont} - the content of the file as bytes
    */
   setRawContent(...args) { return Spaces.getFileContentProvider().setRawContent(this, ...args); }
 
   /**
    * Gets the raw content of a file
-   * @returns {ArrayBuffer}
+   * @returns {Promise<ArrayBuffer>}
    */
   rawContent(...args) { return Spaces.getFileContentProvider().rawContent(this, ...args); }
 
@@ -46,19 +47,52 @@ export default class File extends Base {
    */
   rawContentSize(...args) { return Spaces.getFileContentProvider().rawContentSize(this, ...args); }
 
+  /**
+   * Returns whether this file has raw content
+   * @returns {boolean}
+   */
+  hasRawContent(...args) { return Spaces.getFileContentProvider().hasRawContent(this, ...args); }
+
+  /**
+   * Clears raw content from the cache. Not guaranteed to clear content, cache may ignore.
+   * Should be used to ensure we don't sent content in memory to the main thread.
+   */
+  clearRawContent(...args) { return Spaces.getFileContentProvider().clearRawContent(this, ...args); }
+
 
   // Returned from Spaces.getContentProvider as get
   static __content(file, encoding = 'utf8') {
-    const decoder = new TextDecoder(encoding);
-    return decoder.decode(new DataView(file._rawContent));
+    if (file.hasRawContent()) {
+      const decoder = new TextDecoder(encoding);
+      return file.rawContent()
+        .then((content) => {
+          if (!content) {
+            return Promise.reject(new Error('content undefined, rawContent must return an ArrayBuffer'));
+          }
+          return decoder.decode(new DataView(content));
+        });
+    }
+    return Promise.reject(new Error('raw content does not exist'));
   }
 
   // Returned from Spaces.getContentProvider as set
-  static __setRawContent(file, cont) { file._rawContent = cont; }
+  static __setRawContent(file, cont) {
+    if (typeof cont.then !== 'function') {
+      return Promise.reject(new Error('content must be a promise'));
+    }
+    return cont.then((content) => {
+      file._rawContent = content;
+      return Promise.resolve(file);
+    });
+  }
 
-  static __rawContent(file) { return file._rawContent; }
+  static __rawContent(file) { if (!file._rawContent) return Promise.reject(new Error('raw content does not exist')); return Promise.resolve(file._rawContent); }
 
   static __rawContentSize(file) { return file._rawContent ? file._rawContent.byteLength : 0; }
+
+  static __hasRawContent(file) { return file._rawContent !== undefined; }
+
+  static __clearRawContent(file) { file._rawContent = null; return file; }
 
   /**
    * Returns URL for this file
@@ -89,7 +123,7 @@ export default class File extends Base {
    * @returns {Promise<File>}
    */
   load(stream) {
-    if (this.rawContent() !== undefined) {
+    if (this.hasRawContent()) {
       return Promise.resolve(this);
     }
     const ret = this.copy();
@@ -143,8 +177,7 @@ export default class File extends Base {
               if (stream) {
                 return Promise.resolve(ret);
               }
-              ret.setRawContent(filecontent);
-              return Promise.resolve(ret);
+              return ret.setRawContent(Promise.resolve(filecontent));
             });
         }
         return Promise.resolve(ret);
@@ -195,20 +228,17 @@ export default class File extends Base {
             if (typeof (content) === 'string' || content instanceof String) {
               const encoder = new TextEncoder('utf8');
               const buf = encoder.encode(content).buffer; // TextEncoder returns UInt8Array
-              f.setRawContent(buf);
-              resolve(f);
+              resolve(f.setRawContent(Promise.resolve(buf)));
             } else if (content.constructor.name === 'ArrayBuffer' || content instanceof ArrayBuffer) {
-              f.setRawContent(content);
-              resolve(f);
+              resolve(f.setRawContent(Promise.resolve(content)));
             } else if (content.constructor.name === 'File' || content instanceof File) {
               const fr = new FileReader();
               fr.onloadend = (evt) => {
                 if (evt.target.readyState === FileReader.DONE) {
                   // check to see if we need to decompress file ...
-                  return new Promise(res => {
+                  return new Promise(() => {
                     gunzipIfNeeded(f.name, fr.result, (err, buf) => {
-                      f.setRawContent(buf);
-                      res(f);
+                      return f.setRawContent(Promise.resolve(buf));
                     });
                   }).then(() => { resolve(f); });
                 }
@@ -252,7 +282,7 @@ export default class File extends Base {
           if (checkFile) {
             const cf = dataset.file(mf.itemid());
             if (cf && cf.itemid() !== undefined) {
-              mf.setRawContent(cf.rawContent());
+              return mf.setRawContent(cf.rawContent());
             }
           }
           return mf;

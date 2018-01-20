@@ -7,3 +7,5 @@ codeship*
 *args*
 coverage
 TODO
+build
+github_deploy_key.enc

@@ -61,10 +61,13 @@ export default class File extends Base {
 
 
   // Returned from Spaces.getContentProvider as get
-  static __content(file, encoding = 'utf8') {
+  static __content(file, encoding = 'utf8', rcPromise = undefined) {
     if (file.hasRawContent()) {
       const decoder = new TextDecoder(encoding);
-      return file.rawContent()
+      if (!rcPromise) {
+        rcPromise = file.rawContent();
+      }
+      return rcPromise
         .then((content) => {
           if (!content) {
             return Promise.reject(new Error('content undefined, rawContent must return an ArrayBuffer'));

@@ -273,7 +273,6 @@ export default class File extends Base {
    */
   static list(dataset) {
     let id;
-    let checkFile = false;
     if (dataset === undefined) {
       return Promise.reject('dataset undefined');
     }
@@ -284,23 +283,9 @@ export default class File extends Base {
       }
     } else {
       id = dataset.id;
-      checkFile = true;
     }
     return getFiles(id.space_id, id.item_id)
-      .then(payload => {
-        const files = payload.items.map(f => {
-          const mf = new File(f);
-          // TODO: consider potential cache size bloat
-          if (checkFile) {
-            const cf = dataset.file(mf.itemid());
-            if (cf && cf.itemid() !== undefined) {
-              return mf.setRawContent(cf.rawContent());
-            }
-          }
-          return mf;
-        });
-        return files;
-      });
+      .then(payload => payload.items.map(f => new File(f)));
   }
 
   /**

@@ -17,6 +17,8 @@ let _contentProvider = {
   rawContentSize: File.__rawContentSize,
   hasRawContent: File.__hasRawContent,
   clearRawContent: File.__clearRawContent,
+  getFromCache: File.__getFromCache,
+  storeInCache: File.__storeInCache,
 };
 
 /* eslint key-spacing: off */

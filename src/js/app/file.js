@@ -97,6 +97,10 @@ export default class File extends Base {
 
   static __clearRawContent(file) { file._rawContent = null; return file; }
 
+  static __getFromCache() { return Promise.reject(new Error('cache not implemented')); }
+
+  static __storeInCache() { return Promise.reject(new Error('cache not implemented')); }
+
   /**
    * Returns URL for this file
    * @returns {string}
@@ -168,18 +172,23 @@ export default class File extends Base {
           if (payload.content_type === 'application/gzip') {
             dlOptions.compress = false;
           }
-          return getFileContent(id.space_id, id.dataset_id, id.item_id, dlOptions)
-            .then((res) => {
-              if (stream) {
-                res.body.pipe(stream);
-                return Promise.resolve();
-              }
-              return res.arrayBuffer();
+          return Spaces.getFileContentProvider().getFromCache(id)
+            .catch(() => {
+              return getFileContent(id.space_id, id.dataset_id, id.item_id, dlOptions)
+                .then((res) => {
+                  if (stream) {
+                    res.body.pipe(stream);
+                    return Promise.resolve();
+                  }
+                  return res.arrayBuffer();
+                });
             })
             .then((filecontent) => {
               if (stream) {
                 return Promise.resolve(ret);
               }
+              Spaces.getFileContentProvider().storeInCache(id, Promise.resolve(filecontent))
+                .catch(() => {});
               return ret.setRawContent(Promise.resolve(filecontent));
             });
         }

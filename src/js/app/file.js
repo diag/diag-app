@@ -240,17 +240,23 @@ export default class File extends Base {
             if (typeof (content) === 'string' || content instanceof String) {
               const encoder = new TextEncoder('utf8');
               const buf = encoder.encode(content).buffer; // TextEncoder returns UInt8Array
-              resolve(f.setRawContent(Promise.resolve(buf)));
+              f.setRawContent(Promise.resolve(buf))
+                .then((newf) => resolve(newf));
             } else if (content.constructor.name === 'ArrayBuffer' || content instanceof ArrayBuffer) {
-              resolve(f.setRawContent(Promise.resolve(content)));
+              f.setRawContent(Promise.resolve(content))
+                .then((newf) => resolve(newf));
             } else if (content.constructor.name === 'File' || content instanceof File) {
               const fr = new FileReader();
               fr.onloadend = (evt) => {
                 if (evt.target.readyState === FileReader.DONE) {
                   // check to see if we need to decompress file ...
-                  return new Promise(() => {
+                  return new Promise((res, rej) => {
                     gunzipIfNeeded(f.name, fr.result, (err, buf) => {
-                      return f.setRawContent(Promise.resolve(buf));
+                      if (err) {
+                        rej(err);
+                      }
+                      f.setRawContent(Promise.resolve(buf))
+                        .then((newf) => res(newf));
                     });
                   }).then(() => { resolve(f); });
                 }

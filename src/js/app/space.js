@@ -62,7 +62,7 @@ export default class Space extends Base {
    * @returns {Promise<Space>}
    */
   update() {
-    return patchSpace(this.id.item_id, this.name, this.dataset_cf_schema, this.dataset_cf_uischema)
+    return patchSpace(this.id.item_id, this.name, this.dataset_cf_schema, this.dataset_cf_uischema, this.ftr)
       .then((payload) => {
         const ret = this.copy();
         if (payload.count > 0) {

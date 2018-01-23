@@ -22,7 +22,7 @@ export default class Dataset extends Base {
   url() { return Dataset.url(this.id); }
 
 
-  static _newDataset(payload){
+  static _newDataset(payload) {
     if (payload.count > 0) {
       return Promise.resolve(new Dataset(payload.items[0]));
     }
@@ -39,9 +39,8 @@ export default class Dataset extends Base {
         return new Error('datasetOrId is not a valid Dataset object or valid AssetId');
       }
       return id;
-    } else {
-      return datasetOrId.id;
     }
+    return datasetOrId.id;
   }
 
 

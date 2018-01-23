@@ -34,8 +34,8 @@ export function postSpace(id, name, publicSpace, dataset_cf_schema, dataset_cf_u
   return run('space', basePost, '', { id, name, public: publicSpace, dataset_cf_schema, dataset_cf_uischema });
 }
 
-export function patchSpace(id, name, dataset_cf_schema, dataset_cf_uischema) {
-  return run('space', basePatch, id, { name, dataset_cf_schema, dataset_cf_uischema });
+export function patchSpace(id, name, dataset_cf_schema, dataset_cf_uischema, ftr) {
+  return run('space', basePatch, id, { name, dataset_cf_schema, dataset_cf_uischema, ftr });
 }
 
 ///// dataset
@@ -63,7 +63,7 @@ export function postDatasetNew(sid, content) {
 
 //deprecated dataset API - use new API, see above
 export function postDataset(sid, name, description, tags, problem, resolution, custom) {
-  return postDatasetNew(sid, {name, description, tags, problem, resolution, custom });
+  return postDatasetNew(sid, { name, description, tags, problem, resolution, custom });
 }
 
 //deprecated dataset API - use new API, see above
@@ -76,7 +76,7 @@ export function patchDataset(sid, datasetId, name, description, tags, problem, r
 
 export function patchFile(file, patchOptions) {
   const fid = file.id;
-  return run('file', basePatch, joinUri(fid.space_id,  fid.dataset_id, fid.item_id), patchOptions);
+  return run('file', basePatch, joinUri(fid.space_id, fid.dataset_id, fid.item_id), patchOptions);
 }
 
 export function getFile(sid, datasetId, fileId) {

@@ -198,6 +198,18 @@ describe('App Files', () => {
         expect(ret).toBe(td.f1orig.content);
       });
   });
+
+  it('should delete and not return from API', () => {
+    return td.file2.delete()
+      .then((f) => {
+        expect(f.id.item_id).toBe(td.file2.id.item_id);
+        const deleteIdStr = new AssetId(td.file2.id).toString();
+        return File.load(deleteIdStr);
+      })
+      .catch((err) => {
+        expect(err.status).toBe(404);
+      });
+  });
 });
 
 describe('Redux Files', () => {
@@ -214,9 +226,12 @@ describe('Redux Files', () => {
           expect(actions).toHaveLength(1);
           expect(actions[0].type).toBe(DIAG_CREATE);
           expect(actions[0].payload).toBeInstanceOf(File);
-          expect(actions[0].payload.content()).toBe(td.f1orig.content);
           td.fileCreateAction = actions[0];
           td.file = td.fileCreateAction.payload;
+          return actions[0].payload.content();
+        })
+        .then((content) => {
+          expect(content).toBe(td.f1orig.content);
         })
     ));
 

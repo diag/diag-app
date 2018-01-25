@@ -1,5 +1,6 @@
 import { Spaces } from '../app';
-import { parseJSON, baseGet, basePost, basePatch, putOptions, resolveUserId } from '../utils/apiutils';
+import { parseJSON, baseGet, basePost, basePatch, baseDelete, putOptions, resolveUserId } from '../utils/apiutils';
+import { joinUri } from '../utils';
 
 function processResponse(type, p) {
   return p.then(resolveUserId)
@@ -28,12 +29,13 @@ export function getAllSpaces() {
   return run('space', baseGet, '');
 }
 
-export function postSpace(id, name) {
-  return run('space', basePost, '', { id, name });
+/* eslint camelcase: off */
+export function postSpace(id, name, publicSpace, dataset_cf_schema, dataset_cf_uischema) {
+  return run('space', basePost, '', { id, name, public: publicSpace, dataset_cf_schema, dataset_cf_uischema });
 }
 
-export function patchSpace(id, name) {
-  return run('space', basePatch, id, { name });
+export function patchSpace(id, name, dataset_cf_schema, dataset_cf_uischema, ftr) {
+  return run('space', basePatch, id, { name, dataset_cf_schema, dataset_cf_uischema, ftr });
 }
 
 ///// dataset
@@ -43,15 +45,30 @@ export function getDatasets(sid) {
 }
 
 export function getDataset(sid, datasetId) {
-  return run('dataset', baseGet, `${sid}/${datasetId}`);
+  return run('dataset', baseGet, joinUri(sid, datasetId));
 }
 
-export function postDataset(sid, name, description, tags, problem, resolution) {
-  return run('dataset', basePost, sid, { name, description, tags, problem, resolution });
+export function deleteDataset(sid, datasetId) {
+  return run('dataset', baseDelete, joinUri(sid, datasetId));
 }
 
-export function patchDataset(sid, datasetId, name, description, tags, problem, resolution) {
-  return run('dataset', basePatch, `${sid}/${datasetId}`, { name, description, tags, problem, resolution });
+//new API
+export function patchDatasetNew(sid, datasetId, content) {
+  return run('dataset', basePatch, joinUri(sid, datasetId), content);
+}
+
+export function postDatasetNew(sid, content) {
+  return run('dataset', basePost, sid, content);
+}
+
+//deprecated dataset API - use new API, see above
+export function postDataset(sid, name, description, tags, problem, resolution, custom) {
+  return postDatasetNew(sid, { name, description, tags, problem, resolution, custom });
+}
+
+//deprecated dataset API - use new API, see above
+export function patchDataset(sid, datasetId, name, description, tags, problem, resolution, custom) {
+  return patchDatasetNew(sid, datasetId, { name, description, tags, problem, resolution, custom });
 }
 
 
@@ -59,15 +76,15 @@ export function patchDataset(sid, datasetId, name, description, tags, problem, r
 
 export function patchFile(file, patchOptions) {
   const fid = file.id;
-  return run('file', basePatch, `${fid.space_id}/${fid.dataset_id}/${fid.item_id}`, patchOptions);
+  return run('file', basePatch, joinUri(fid.space_id, fid.dataset_id, fid.item_id), patchOptions);
 }
 
 export function getFile(sid, datasetId, fileId) {
-  return run('file', baseGet, `${sid}/${datasetId}/${fileId}`);
+  return run('file', baseGet, joinUri(sid, datasetId, fileId));
 }
 
 export function getFiles(sid, datasetId) {
-  return run('file', baseGet, `${sid}/${datasetId}`);
+  return run('file', baseGet, joinUri(sid, datasetId));
 }
 
 export function uploadFile(sid, datasetId, name, description, contentType, size, content) {
@@ -89,18 +106,26 @@ export function uploadFile(sid, datasetId, name, description, contentType, size,
     .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
     .join('&');
 
-  return processResponse('file', fetch(`${Spaces.apiUrl()}/files/${sid}/${datasetId}/upload?${query}`, options).then(parseJSON));
+  return processResponse('file', fetch(`${Spaces.apiUrl()}/${joinUri('files', sid, datasetId, 'upload')}?${query}`, options).then(parseJSON));
 }
 
 
-export function getFileContent(sid, datasetId, fileId) {
-  return baseGet(`${Spaces.apiUrl()}/files/${sid}/${datasetId}/${fileId}/download_url`)
+export function getFileContent(sid, datasetId, fileId, options) {
+  if (options === undefined) {
+    options = {};
+  }
+  return baseGet(`${Spaces.apiUrl()}/${joinUri('files', sid, datasetId, fileId, 'download_url')}`)
     .then((payload) => {
       const downloadOptions = {
         headers: payload.http_headers,
         method: payload.http_method,
         credentials: 'same-origin',
+        ...options,
       };
       return fetch(payload.signed_url, downloadOptions);
     });
+}
+
+export function deleteFile(sid, datasetId, fileId) {
+  return run('file', baseDelete, joinUri(sid, datasetId, fileId));
 }

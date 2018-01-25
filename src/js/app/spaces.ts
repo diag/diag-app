@@ -1,5 +1,5 @@
 import { getAllSpaces } from '../api/datasets';
-import { updateHeaders } from '../utils/apiutils';
+import { updateHeaders, getSessionId, setApiHost, setApiBase, apiHost, apiUrl, apiBase } from '../utils/apiutils';
 import Space from './space';
 import Dataset from './dataset';
 import File from './file';
@@ -7,12 +7,31 @@ import Activity from './activity';
 import Annotation from './annotation';
 import User from './user';
 import APIPayload from '../api/types';
+import * as types from './types';
 
 let _store;
 let _dispatch;
-let _apiHost = 'https://app.diag.ai';
-let _apiBase = '/api/v1';
 let _initialized = false;
+let _contentProvider = {
+  content: File.__content,
+  setRawContent: File.__setRawContent,
+  rawContent: File.__rawContent,
+  rawContentSize: File.__rawContentSize,
+  hasRawContent: File.__hasRawContent,
+  clearRawContent: File.__clearRawContent,
+  getFromCache: File.__getFromCache,
+  storeInCache: File.__storeInCache,
+};
+
+/* eslint key-spacing: off */
+const ACTIONS = {
+  DIAG_CREATE: 'storeInsert',
+  DIAG_UPDATE: 'storeUpdate',
+  DIAG_DELETE: 'storeDelete',
+  DIAG_LOAD:   'storeLoad',
+  DIAG_ERROR:  'error',
+};
+/* eslint: key-spacing: on */
 
 interface id {
   item_id: string;
@@ -52,7 +71,7 @@ export default class Spaces {
    * @param {string} url - API Host, defaults to https://app.diag.ai
    */
   static setApiHost(url: string) {
-    _apiHost = url;
+    setApiHost(url);
   }
 
   /**
@@ -60,7 +79,7 @@ export default class Spaces {
    * @param {string} base - API url base, defaults to /api/v1
    */
   static setApiBase(base: string) {
-    _apiBase = base;
+    setApiBase(base);
   }
 
   /**
@@ -68,7 +87,11 @@ export default class Spaces {
    * @param {string} token - API Token to authenticate with
    */
   static setApiToken(token: string) {
-    updateHeaders({ Authorization: `Bearer ${token}` });
+    let bOrD = 'Bearer';
+    if (token.match(/^\d+\.\w{12}$/)) {
+      bOrD = 'Diag';
+    }
+    updateHeaders({ Authorization: `${bOrD} ${token}` });
   }
 
   /**
@@ -76,7 +99,7 @@ export default class Spaces {
    * @returns {string}
    */
   static apiUrl() : string {
-    return `${_apiHost}${_apiBase}`;
+    return apiUrl();
   }
 
   /**
@@ -84,7 +107,29 @@ export default class Spaces {
    * @returns {string}
    */
   static apiHost() : string {
-    return _apiHost;
+    return apiHost();
+  }
+
+  /**
+   * Retrieives the API base, e.g. '/api/v1'
+   * @returns {string}
+   */
+  static apiBase() : string {
+    return apiBase();
+  }
+
+  /**
+   * Returns callbacks for setting and getting file raw data
+   */
+  static getFileContentProvider() : types.IContentProvider {
+    return _contentProvider;
+  }
+
+  /**
+   * Sets callbacks for setting and getting file raw data
+   */
+  static setFileContentProvider(cp: types.IContentProvider) {
+    _contentProvider = { ..._contentProvider, ...cp };
   }
 
   /**
@@ -103,6 +148,12 @@ export default class Spaces {
    * @returns {bool}
    */
   static initialized() : boolean { return _initialized; }
+
+  /**
+   * Returns a randomly generated sessionId
+   * @returns {string}
+   */
+  static sessionId() { return getSessionId(); }
 
   /**
    * Returns a copy of Spaces
@@ -318,10 +369,10 @@ export default class Spaces {
    */
   static reduce(state: any = new Spaces(), action: any) {
     if (!action || !(action.payload || action.error)) return state;
-    if (action.type !== 'DIAG_CREATE' && action.type !== 'DIAG_UPDATE'
-      && action.type !== 'DIAG_DELETE' && action.type !== 'DIAG_LOAD' && action.type !== 'DIAG_ERROR') {
-      return state;
-    }
+
+    const actMethod = ACTIONS[action.type];
+    if (actMethod === undefined) return state;
+
     let ret;
     if (state.constructor) {
       ret = Object.create(state.constructor.prototype);
@@ -332,25 +383,16 @@ export default class Spaces {
       Object.assign(ret, state, { error: action.error, status: action.status });
       return ret;
     }
-    switch (action.type) {
-      case 'DIAG_CREATE':
-        Object.assign(ret, state, action.payload.storeInsert());
-        break;
-      case 'DIAG_UPDATE':
-        Object.assign(ret, state, action.payload.storeUpdate());
-        break;
-      case 'DIAG_DELETE':
-        Object.assign(ret, state, action.payload.storeDelete());
-        break;
-      case 'DIAG_LOAD':
-        if (Array.isArray(action.payload) && action.payload.length === 0) {
-          return state;
-        }
-        Object.assign(ret, state, action.payload[0].storeLoad(action.payload));
-        break;
-      default:
-        break;
+
+    let payload = action.payload;
+    if (Array.isArray(payload) && payload.length === 0) {
+      return state;
+    } else if (!Array.isArray(payload)) {
+      payload = [action.payload];
     }
+
+    Object.assign(ret, state, payload[0][actMethod](payload));
+
     ret.version = state.version + 1;
     return ret;
   }

@@ -1,0 +1,42 @@
+language: node_js
+nodejs:
+  - "8"
+addons:
+  apt:
+    packages:
+    - jq
+env:
+  global:
+    - DIAG_HOST=https://d2.diag.ai
+    - DIAG_TOKEN=22.LsuNtfm0KT4D
+before_install:
+  - openssl aes-256-cbc -K $encrypted_6d0562205770_key -iv $encrypted_6d0562205770_iv -in github_deploy_key.enc -out github_deploy_key -d
+  - chmod 600 github_deploy_key
+  - eval $(ssh-agent -s)
+  - ssh-add github_deploy_key
+  - mkdir -p /tmp/logs
+install:
+- npm install -g diag@latest 2>&1 | tee /tmp/logs/diag_install.log
+- npm install 2>&1 | tee /tmp/logs/npm_install.log
+script:
+- npm run test 2>&1 | tee /tmp/logs/test.log
+- npm run build 2>&1 | tee /tmp/logs/build.log
+after_failure:
+- diag mkds --space travis --name "${TRAVIS_REPO_SLUG:-missing_repo_name} -- Build ${TRAVIS_BUILD_NUMBER:--1}" --desc "${TRAVIS_COMMIT_MESSAGE:-missing_commit_message}" -j > /tmp/dataset.json
+- cat /tmp/dataset.json | jq -r '. | "d/\(.id.space_id)/\(.id.item_id)"' > /tmp/dataset_id
+- diag cp /tmp/logs --name logs.zip $(cat /tmp/dataset_id)
+- diag cp /home/travis/build/diag/diag-app --name source.zip --gitignore $(cat /tmp/dataset_id)
+deploy:
+  on:
+    branch: master
+  provider: npm
+  tag: next
+  skip_cleanup: true
+  email: diagci@diag.ai
+  api_key:
+    secure: en00KHjEQU5xG312ugdw227k+oWzX+PwNUPyujAIwRS2mDC58IyKjH3o/vimjeEUuK+hRLHm6baAV7jGZ7KY4Z4GVhwHHTTPBgDLlpAVI1gtcBMD007JQtxLUXlOLyHlGKJHiYMEqR1tJ61XZSbZfJJ1x0JYbfMb/e/xb0ZH2boJ88bvrX6Jv1Fo9vuuV2+ZHnwNhtNFAYEcX29O2pSXeLk2JW+/uPLTsjOipBivXgTZtpkcV+DmIQREAXrxvS5wl3MdnIeDdWgAT5IisTkGtr7aai4ucojUQfxeQl3oGjwIOAuIfL7UOM1NSn76FWr/zw04smYnb8tgrD8STr6TACe0NktgX/CJQyRVzAtIA0v2WV8DhcJsvSB2s8owuNJxEJz/PRfuLcS8KxHMH5MOzgaCkXsYMn43rTkxp9+aFZSQNsXiLQq0c4xrFyDqmuvcZKwE/2Bhvtuf5abQnsZNBccyD2Uj7WHgu4Z4ttgBlw24VifhdR8bEcM8MAl4RyHIv86EBiAdvwoOKiXKW1e6ofh11bOSeyhGnre4c/1ljjSLkSYig7T9/P1Mamm1f0U/RdqaMhBnmnlTq/YsBXuFqhZzJDRoqrDx35fa9zL02EUg9PjvG9ylJ7MNIKRNU8d3vXpdVv7ZzfhTXtM8S6Gggj72rp07fw1CulhoSBNkRM0=
+notifications:
+  slack:
+    secure: RkINH5QUqYPmi74RONHbDHtMZ3NsI7ONwB+54ZquK31et+izeYxiTS4XJ8Kr6SFQLouozHvbn9QB26RMIupkcVXUGhaoBhIbye/Pmw+5rTEJVXunt19jNpbXx5QpIz94/a98NcrIRxO50mOW3xaypAZnAMwIPNCKgRu2mhnGngJWjiOOd0uGFbznOixdG3wvgpzfD6ST0IBEwzK1LbZ4Lodu6M2TG3zRtRhX1ekd0XsKqHMHZmD2wrje716c6Ufu/tIBWnqTBPrlPEETlsrV1nx2ABDq2uBWoaVmUkVWlmUup1siAXUQnHPohqNpNzAGLBKL7B5il8eF5TX4CLYG/Lw5jCIO6HsBXBFqndSce8rHecnim6SmqZjzucOcu0MYP1py19WnNOOoUnMW2clwUJ8nYqasTRvXJnKOHgjRoTorX41nPCXopoKXqMenXv/Py/SnG5HFq1ETEGs1BZCTIXqbBflGlzkieINdfWapsF+KYc+JZUy4JdIjXG8ia7+4yaRVd2n9MT/U1nhCy+IHV9/BlMBC34KtjZprAXxgl8aqxIZxzzjNU3Bgj9KHvKWTWGZC/Agr2stEF5FTgQjCuAb350Id1syx6rgxJor0f/QioMJbx6ggzCOuLCFTLGcdUgeSc3e+alK0otb+g8U4aVj5q1sa72Ax43aEOXPYanY=
+
+

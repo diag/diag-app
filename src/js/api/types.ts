@@ -1,6 +1,6 @@
-export interface APIPayload {
+export interface IAPIPayload {
   count: number;
   items: Array<Object>;
 }
 
-export default APIPayload;
+export default IAPIPayload;

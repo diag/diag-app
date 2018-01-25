@@ -36,18 +36,6 @@ export function pushTo(arr, el) {
   return arr;
 }
 
-export function isTarArchive(name) {
-  return name.endsWith('.tar') || name.endsWith('.tgz') || name.endsWith('.tar.gz');
-}
-
-export function isZipArchive(name) {
-  return name.toLowerCase().endsWith('.zip');
-}
-
-export function isArchiveFile(name) {
-  return isTarArchive(name) || isZipArchive(name);
-}
-
 export function isGzipFile(name) {
   return name.endsWith('.gz') || name.endsWith('.tgz');
 }
@@ -72,24 +60,5 @@ export function gunzipIfNeeded(name, buf, callback) {
     });
   } else {
     callback(null, buf);
-  }
-}
-
-export class StrStream extends Readable {
-  constructor(s) {
-    super();
-    this.s = s;
-    this.off = 0;
-    this.len = this.s.byteLength;
-  }
-
-  _read(n) {
-    if (this.off >= this.len) {
-      this.push(null);
-    } else {
-      n = Math.min(n, this.len - this.off);
-      this.push(Buffer.from(this.s.slice(this.off, this.off + n)));
-      this.off += n;
-    }
   }
 }

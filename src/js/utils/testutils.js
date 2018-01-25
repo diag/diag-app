@@ -1,4 +1,4 @@
-import { updateHeaders, headers, apiHost, parseJSON } from './apiutils';
+import { updateHeaders, headers, parseJSON } from './apiutils';
 import { random as textRandom } from './textutils';
 import { Spaces } from '../app';
 // import fs from 'fs';

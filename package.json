@@ -1,24 +1,20 @@
 {
   "name": "diag-app",
   "description": "Diag app library",
-  "version": "0.0.4",
-  "main": "dist/index.js",
+  "version": "0.1.33",
+  "main": "dist/js/index.js",
   "scripts": {
     "init": "mkdir dist",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean && npm run init",
-    "build": "babel ./src -d ./dist --ignore test.js",
-    "test": "NODE_ENV=test node_modules/.bin/jest -i"
+    "build": "babel ./src -d ./dist --source-maps --ignore test.js",
+    "test": "NODE_ENV=test node_modules/.bin/jest -i",
+    "magic": "npm version patch && npm run build && npm publish && git push"
   },
   "dependencies": {
-    "compression": "^1.6.2",
-    "diag-search": "git+ssh://git@github.com/diag/diag-search.git",
-    "jszip": "^3.1.4",
     "lodash": "^4.17.4",
-    "query-string": "^5.0.1",
     "redux": "^3.6.0",
     "redux-thunk": "^2.1.0",
-    "tar-stream": "^1.5.4",
     "text-encoding": "^0.6.4"
   },
   "repository": {
@@ -27,7 +23,6 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@types/lodash": "^4.14.91",
     "babel-cli": "^6.22.2",
     "babel-core": "^6.5.2",
     "babel-eslint": "^7.1.1",

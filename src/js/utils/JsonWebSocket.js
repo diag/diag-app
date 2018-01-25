@@ -30,12 +30,14 @@ export default class JsonWebSocket {
    * @param {WebSocket} ws - the WebSocket to wrap, do NOT use the raw websocket from this point on
    * @param {String} defaultType - the default event type - this is such that a JsonWebSocket can be used as a drop in replacement for
    * a WebSocket - if the default send() and addEventListener('messge' ...) are used, then the default event type will be used
+   * @param {Number} keepAliveSec - send keep alive messages every this many seconds, set to 0 to disable keep alive messages
    */
-  constructor(ws, defaultType) {
+  constructor(ws, defaultType, keepAliveSec = 30) {
     this.conn = ws;
     this.defaultType = defaultType;
 
     this.callbacks = {};
+    this.readyState = this.conn.readyState;
 
     // dispatch to the right handlers
     this.conn.addEventListener('message', (evt) => {
@@ -47,12 +49,36 @@ export default class JsonWebSocket {
       }
     });
 
-    this.conn.addEventListener('close', () => { this._dispatch('close', null); });
-    this.conn.addEventListener('error', () => { this._dispatch('error', null); });
-    this.conn.addEventListener('open', () => { this._dispatch('open', null); });
+    this.conn.addEventListener('close', () => { this.readyState = this.conn.readyState; this._teardownKeepAlive(); this._dispatch('close', null); });
+    this.conn.addEventListener('error', () => { this.readyState = this.conn.readyState; this._dispatch('error', null); });
+    this.conn.addEventListener('open', () => { this.readyState = this.conn.readyState; this._setupKeepAlive(keepAliveSec); this._dispatch('open', null); });
+
+    // in case socket is already 'open'
+    this._setupKeepAlive(keepAliveSec);
+  }
+
+  /* eslint no-empty: off */
+  _setupKeepAlive(keepAliveSec) {
+    if (!this.keepAliveInt && keepAliveSec > 0 && this.conn.readyState === 1 /*OPEN*/) {
+      this.keepAliveInt = setInterval(() => {
+        try {
+          this.send('_keepalive', {});
+        } catch (ignore) {}
+      }, keepAliveSec * 1000);
+    }
+  }
+
+  _teardownKeepAlive() {
+    if (this.keepAliveInt) {
+      clearInterval(this.keepAliveInt);
+      this.keepAliveInt = undefined;
+    }
   }
 
   _dispatch(type, data) {
+    if (type === '_keepalive') {
+      return; // noop, ignore
+    }
     (this.callbacks[type] || []).forEach(cb => {
       try {
         cb({ type, data });

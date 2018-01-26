@@ -1,8 +1,26 @@
 import { props } from '../utils/apputils';
+import * as isEqual from 'lodash/fp/isEqual';
+import * as types from './types';
 
-const isEqual = require('lodash/fp/isEqual');
+export default abstract class Base {
+  _store: Function;
+  name: string;
+  id: types.id;
 
-export default class Base {
+  // abstract url() : string;
+  // abstract update() : any;
+  // abstract delete(): any;
+  // abstract content(): Promise<string>;
+  // abstract setRawContent(): any;
+  // abstract rawContent(): any;
+  // abstract rawContentSize(): any;
+  // abstract hasRawContent(): any;
+  // abstract clearRawContent(): any;
+  // abstract createComment(): any;
+  // abstract updateComment(): any;
+  // abstract deleteComment(): any;
+  // abstract load(stream: any): any;
+
   constructor(store) {
     // _store is a function which will return Spaces
     this._store = store;
@@ -16,19 +34,19 @@ export default class Base {
    * Returns non-private activity properties in a shallow object copy
    * @returns {object}
    */
-  props() { return props(this); }
+  props() : Object { return props(this); }
 
   /**
    * Returns a shallow copy of ourself
    * @returns {object}
    */
-  copy() {
+  copy() : Base {
     const ret = Object.create(this.constructor.prototype);
     Object.assign(ret, this);
     return ret;
   }
 
-  toSerializable() {
+  toSerializable() : Object {
     const ret = Object.assign({}, this);
     delete ret._store; // can't be serialized
     return ret;
@@ -38,11 +56,11 @@ export default class Base {
    * Gets the name of the key we store ourselves in our parent
    * @returns {string}
    */
-  static getKey(klass) {
+  static getKey(klass : string) : string {
     return `_${klass.toLowerCase()}`;
   }
 
-  _getKey() {
+  _getKey() : string {
     return Base.getKey(this.constructor.name);
   }
 
@@ -50,7 +68,7 @@ export default class Base {
    * Gets existing objects stored in the parent
    * @returns {Array<object>}
    */
-  _getSelfs() {
+  _getSelfs() : Array<Base> {
     return this._store()[this._getKey()] || [];
   }
 
@@ -58,7 +76,7 @@ export default class Base {
    * Gets existing objects stored in the parent
    * @returns {Array<object>}
    */
-  static getSelfs(klass, store) {
+  static getSelfs(klass, store) : Array<Base> {
     return store[Base.getKey(klass)] || [];
   }
 
@@ -66,7 +84,7 @@ export default class Base {
    * Finds self index in the store
    * @returns {integer}
    */
-  _findSelfIndex() {
+  _findSelfIndex() : number {
     return this._getSelfs().findIndex(o => isEqual(o.id, this.id));
   }
 
@@ -74,19 +92,19 @@ export default class Base {
    * ID of the item as a string
    * @returns {string}
   */
-  itemid() { return typeof this.id !== 'object' ? undefined : this.id.item_id; }
+  itemid() : string { return typeof this.id !== 'object' ? undefined : this.id.item_id; }
 
   /**
    * Name of the item
    * @returns {string}
    */
-  itemname() { return this.name === undefined ? this.itemid() : this.name; }
+  itemname() : string { return this.name === undefined ? this.itemid() : this.name; }
 
   /**
    * The parent Space
    * @returns {Space}
    */
-  space() {
+  space() : any {
     let spaceId;
     if (this.id) {
       spaceId = this.id.space_id ? this.id.space_id : this.id.item_id;
@@ -105,7 +123,8 @@ export default class Base {
    * @param {string} did - Dataset ID to access
    * @returns {Dataset}
    */
-  dataset(did) {
+  // dataset(did: types.id) : types.Dataset {
+  dataset(did: types.id) : any {
     let datasetId;
     if (!did) {
       datasetId = this.id.dataset_id ? this.id.dataset_id : this.id.item_id;
@@ -125,7 +144,8 @@ export default class Base {
   /**
    * Child datasets
    */
-  datasets() {
+  // datasets() : Array<types.Dataset> {
+  datasets(): any {
     if (!this.id) {
       return [];
     }
@@ -144,7 +164,8 @@ export default class Base {
    * @param {string} fid - File ID to access
    * @returns {File}
    */
-  file(fid) {
+  // file(fid?: types.id) : types.File {
+  file(fid ?: types.id) : any {
     let fileId;
     if (!fid) {
       fileId = this.id.file_id ? this.id.file_id : this.id.item_id;
@@ -165,7 +186,8 @@ export default class Base {
   /**
    * Child files
    */
-  files() {
+  // files() : Array<types.File> {
+  files() : any {
     if (!this.id) {
       return [];
     }
@@ -184,7 +206,8 @@ export default class Base {
   /**
    * Annotations
    */
-  annotations() {
+  // annotations() : Array<types.Annotation> {
+  annotations() : any {
     if (typeof this._store().annotations !== 'function') {
       return [];
     }
@@ -194,7 +217,8 @@ export default class Base {
   /**
    * Activity
    */
-  activity() {
+  // activity() : Array<types.Activity> {
+  activity() : any {
     if (typeof this._store().activity !== 'function') {
       return [];
     }
@@ -205,7 +229,7 @@ export default class Base {
    * Inserts this item into a copy of its parent
    * @returns {Diag}
    */
-  storeInsert(objs) {
+  storeInsert(objs: Array<Base>) : Object {
     const ret = this._store().copy();
     const key = this._getKey();
     const selfs = this._getSelfs();
@@ -225,7 +249,7 @@ export default class Base {
    * @params {object[]} objs - Objects to load
    * @returns {Diag}
    */
-  storeLoad(objs) {
+  storeLoad(objs: Array<Base>) : Object {
     const ret = this._store().copy();
     if (objs) {
       let selfs = this._getSelfs();
@@ -242,7 +266,7 @@ export default class Base {
    * Updates an item in a copy of its parent
    * @returns {Diag}
    */
-  storeUpdate(objs) {
+  storeUpdate(objs: Array<Base>) : Base {
     const ret = this._store().copy();
     const selfs = this._getSelfs();
     const key = this._getKey();
@@ -268,7 +292,7 @@ export default class Base {
    * Deletes an item in a copy of its parent
    * @returns {Diag}
   */
-  storeDelete(objs) {
+  storeDelete(objs: Array<Base>) : Base {
     const ret = this._store().copy();
     const key = this._getKey();
     const selfs = this._getSelfs();
@@ -282,7 +306,8 @@ export default class Base {
   }
 
   /* eslint no-lonely-if: off */
-  static _getFilterFunc(id, type = 'list') {
+  static _getFilterFunc(id: types.id, type?: string) : (item: Base) => boolean;
+  static _getFilterFunc(id: types.id, type = 'list') {
     let fFunc;
     if (id) {
       if (typeof id === 'string') {
@@ -321,7 +346,7 @@ export default class Base {
    * @param {object} id - ID to retrieve
    * @returns {object[]}
    */
-  storeList(id) {
+  storeList(id: types.id) : Array<Base> {
     const fFunc = Base._getFilterFunc(id);
     return this._getSelfs().filter(fFunc);
   }
@@ -332,7 +357,7 @@ export default class Base {
    * @param {object} id - ID to filter by
    * @returns {object[]}
    */
-  static storeListByClass(store, id) {
+  static storeListByClass(store: Object, id: types.id) : Array<Base> {
     const fFunc = Base._getFilterFunc(id);
     return Base.getSelfs(this.name, store).filter(fFunc);
   }
@@ -342,7 +367,7 @@ export default class Base {
    * @param {object} id - ID to retrieve
    * @returns {object}
    */
-  storeGet(id) {
+  storeGet(id: types.id) : this {
     const fFunc = Base._getFilterFunc(id, 'get');
     return this._getSelfs().find(fFunc);
   }
@@ -352,7 +377,7 @@ export default class Base {
    * @param {object} id - ID to retrieve
    * @returns {object}
    */
-  static storeGetByClass(store, id) {
+  static storeGetByClass(store: Object, id: types.id) : Base {
     const fFunc = Base._getFilterFunc(id, 'get');
     return Base.getSelfs(this.name, store).find(fFunc);
   }

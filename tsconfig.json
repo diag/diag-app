@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
-    "module": "system",
-    "outDir": "./built",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "inlineSources": true,
     "allowJs": true,
     "target": "es5",
     "noImplicitAny": false,
@@ -13,6 +15,6 @@
     ]
   },
   "include": [
-    "./src/**/*"
+    "../diag-app/src/**/*"
   ]
 }

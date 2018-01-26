@@ -3,19 +3,26 @@ import {
 } from '../api/users';
 import Spaces from './spaces';
 import Base from './base';
+import * as types from './types';
 
 /** Space containing datasets and activity */
 export default class User extends Base {
-  constructor(user) {
+  id: types.id;
+  prefs: Object;
+
+  constructor(user: Object) {
     super(Spaces.store);
     Object.assign(this, user);
   }
+
+  static storeListByClass(...args): User[] { return Base.storeListByClass(...args); }
+  static storeGetByClass(...args): User { return Base.storeGetByClass(...args); }
 
   /**
    * Returns a copy of ourself
    * @returns {User}
    */
-  copy() {
+  copy() : User {
     const ret = super.copy();
     ret.prefs = { ...ret.prefs };
     return ret;

@@ -41,3 +41,11 @@ export interface IGetFromCache {
 export interface IStoreInCache {
   (id: Object, content: Promise<ArrayBuffer>): Promise<ArrayBuffer> & Promise<never>;
 }
+
+export interface id {
+  item_id?: string;
+  space_id?: string;
+  dataset_id?: string;
+  file_id?: string;
+  type?: string;
+}

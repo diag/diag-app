@@ -33,14 +33,6 @@ const ACTIONS = {
 };
 /* eslint: key-spacing: on */
 
-interface id {
-  item_id: string;
-  space_id?: string;
-  dataset_id?: string;
-  file_id?: string;
-  type?: string;
-}
-
 /** Top level class representing all spaces we have access to */
 export default class Spaces {
   _currentSpaceId: string;
@@ -234,7 +226,7 @@ export default class Spaces {
    * @param {object} id - ID to filter files
    * @returns {File[]}
    */
-  files(id: id) : File[] {
+  files(id: types.id) : File[] {
     return File.storeListByClass(this, id);
   }
 
@@ -274,26 +266,26 @@ export default class Spaces {
    * @param {object} id - ID object to filter on
    * @returns {Activity[]}
    */
-  activity(id: id) : Activity[] { return Activity.storeListByClass(this, id); }
+  activity(id: types.id) : Activity[] { return Activity.storeListByClass(this, id); }
 
   /**
    * Returns annotations for id
    * @param {object} id - ID object to filter on
    * @returns {Annotation[]}
    */
-  annotations(id: id) : Annotation[] { return Annotation.storeListByClass(this, id); }
+  annotations(id: types.id) : Annotation[] { return Annotation.storeListByClass(this, id); }
 
   /**
    * Returns users matching a given id
    * @param {string} id - ID to filter on
    */
-  users(id: id) : User[] { return User.storeListByClass(this, id); }
+  users(id: types.id) : User[] { return User.storeListByClass(this, id); }
 
   /**
    * Returns user matching a given id
    * @param {string} id - ID to filter on
    */
-  user(id: id) : User { return User.storeGetByClass(this, id); }
+  user(id: types.id) : User { return User.storeGetByClass(this, id); }
 
   /**
    * Load from API

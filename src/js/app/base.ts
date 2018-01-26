@@ -5,7 +5,7 @@ import * as types from './types';
 export default abstract class Base {
   _store: Function;
   name: string;
-  id: types.id;
+  id: any;
 
   // abstract url() : string;
   // abstract update() : any;
@@ -357,7 +357,7 @@ export default abstract class Base {
    * @param {object} id - ID to filter by
    * @returns {object[]}
    */
-  static storeListByClass(store: Object, id: types.id) : Array<Base> {
+  static storeListByClass(store: Object, id: types.id) : Array<any> {
     const fFunc = Base._getFilterFunc(id);
     return Base.getSelfs(this.name, store).filter(fFunc);
   }
@@ -367,7 +367,7 @@ export default abstract class Base {
    * @param {object} id - ID to retrieve
    * @returns {object}
    */
-  storeGet(id: types.id) : this {
+  storeGet(id: types.id) : any {
     const fFunc = Base._getFilterFunc(id, 'get');
     return this._getSelfs().find(fFunc);
   }
@@ -377,7 +377,7 @@ export default abstract class Base {
    * @param {object} id - ID to retrieve
    * @returns {object}
    */
-  static storeGetByClass(store: Object, id: types.id) : Base {
+  static storeGetByClass(store: Object, id: types.id) : any {
     const fFunc = Base._getFilterFunc(id, 'get');
     return Base.getSelfs(this.name, store).find(fFunc);
   }

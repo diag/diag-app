@@ -128,9 +128,9 @@ export default class Spaces {
    * Returns our current store
    * @returns {object}
    */
-  static store() : Object{
+  static store() : Spaces {
     if (!_store) {
-      return {};
+      return new Spaces();
     }
     return _store();
   }

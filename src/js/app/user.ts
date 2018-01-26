@@ -7,7 +7,7 @@ import * as types from './types';
 
 /** Space containing datasets and activity */
 export default class User extends Base {
-  id: types.id;
+  id: string;
   prefs: Object;
 
   constructor(user: Object) {
@@ -15,15 +15,15 @@ export default class User extends Base {
     Object.assign(this, user);
   }
 
-  static storeListByClass(...args): User[] { return Base.storeListByClass(...args); }
-  static storeGetByClass(...args): User { return Base.storeGetByClass(...args); }
+  static storeListByClass(store: Object, id: types.id): User[] { return Base.storeListByClass(store, id); }
+  static storeGetByClass(store: Object, id: types.id): User { return Base.storeGetByClass(store, id); }
 
   /**
    * Returns a copy of ourself
    * @returns {User}
    */
   copy() : User {
-    const ret = super.copy();
+    const ret = <User>super.copy();
     ret.prefs = { ...ret.prefs };
     return ret;
   }

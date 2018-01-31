@@ -3,7 +3,7 @@ import {
 } from '../api/users';
 import Spaces from './spaces';
 import Base from './base';
-import * as types from './types';
+import * as types from '../typings';
 
 /** Space containing datasets and activity */
 export default class User extends Base {
@@ -15,8 +15,8 @@ export default class User extends Base {
     Object.assign(this, user);
   }
 
-  static storeListByClass(store: Object, id: types.id): User[] { return Base.storeListByClass(store, id); }
-  static storeGetByClass(store: Object, id: types.id): User { return Base.storeGetByClass(store, id); }
+  // static storeListByClass(store: Object, id: string): Array<any> { return Base.storeListByClass(store, id); }
+  // static storeGetByClass(store: Object, id: string): any { return Base.storeGetByClass(store, id); }
 
   /**
    * Returns a copy of ourself
@@ -43,14 +43,14 @@ export default class User extends Base {
    * Returns URL for the user given a user id
    * @returns {string}
    */
-  static url(userId) { return userId === undefined ? undefined : `/users/${userId}`; }
+  static url(userId: string): string { return userId === undefined ? undefined : `/users/${userId}`; }
 
   /**
    * Fetches a user from the API by id
    * @param {string} userId - ID of the user to retrieve from the API, defaults to 'me'
    * @returns {Promise<User[]>}
    */
-  static load(userId) {
+  static load(userId: string): Promise<Array<User>> {
     let loadPrefs = false;
     if (!userId) {
       userId = 'me';
@@ -68,7 +68,7 @@ export default class User extends Base {
         if (loadPrefs) {
           return getPrefs();
         }
-        return Promise.resolve();
+        return Promise.resolve({});
       })
       .then((payload) => {
         if (loadPrefs) {

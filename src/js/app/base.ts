@@ -1,6 +1,6 @@
 import { props } from '../utils/apputils';
 import * as isEqual from 'lodash/fp/isEqual';
-import * as types from './types';
+import * as types from '../typings';
 
 export default abstract class Base {
   _store: Function;
@@ -306,8 +306,9 @@ export default abstract class Base {
   }
 
   /* eslint no-lonely-if: off */
+  static _getFilterFunc(id: string, type?: string): (item: Base) => boolean;
   static _getFilterFunc(id: types.id, type?: string) : (item: Base) => boolean;
-  static _getFilterFunc(id: types.id, type = 'list') {
+  static _getFilterFunc(id, type = 'list') {
     let fFunc;
     if (id) {
       if (typeof id === 'string') {
@@ -357,7 +358,9 @@ export default abstract class Base {
    * @param {object} id - ID to filter by
    * @returns {object[]}
    */
-  static storeListByClass(store: Object, id: types.id) : Array<any> {
+  static storeListByClass(store: Object, id: string): Array<any>;
+  static storeListByClass(store: Object, id: types.id): Array<any>;
+  static storeListByClass(store, id) {
     const fFunc = Base._getFilterFunc(id);
     return Base.getSelfs(this.name, store).filter(fFunc);
   }
@@ -377,7 +380,9 @@ export default abstract class Base {
    * @param {object} id - ID to retrieve
    * @returns {object}
    */
-  static storeGetByClass(store: Object, id: types.id) : any {
+  static storeGetByClass(store: Object, id: string): any
+  static storeGetByClass(store: Object, id: types.id): any;
+  static storeGetByClass(store, id) : any {
     const fFunc = Base._getFilterFunc(id, 'get');
     return Base.getSelfs(this.name, store).find(fFunc);
   }

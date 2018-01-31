@@ -1,8 +1,9 @@
-import { Spaces } from '../app';
-import { parseJSON, baseGet, basePost, basePatch, baseDelete, putOptions, resolveUserId } from '../utils/apiutils';
+import { Spaces, File } from '../app';
+import { parseJSON, baseGet, basePost, basePatch, baseDelete, putOptions, resolveUserId } from '../utils';
 import { joinUri } from '../utils';
+import * as types from '../typings';
 
-function processResponse(type, p) {
+function processResponse(type: string, p: Promise<any>): Promise<types.IAPIPayload> {
   return p.then(resolveUserId)
     .then(payload => {
       payload.items.forEach(a => { a.id.type = type; });
@@ -17,77 +18,77 @@ function processResponse(type, p) {
  * @param {string} url - URL to query
  * @param {object} args - Arguments for the POST or PATCH body
  */
-function run(type, funct, url, args) {
+function run(type: string, funct: Function, url: string, args?: any) {
   return processResponse(type, funct(`${Spaces.apiUrl()}/${type}s/${url}`, args));
 }
 
-export function getSpace(sid) {
+export function getSpace(sid: string): Promise<types.IAPIPayload> {
   return run('space', baseGet, sid);
 }
 
-export function getAllSpaces() {
+export function getAllSpaces(): Promise<types.IAPIPayload> {
   return run('space', baseGet, '');
 }
 
 /* eslint camelcase: off */
-export function postSpace(id, name, publicSpace, dataset_cf_schema, dataset_cf_uischema) {
+export function postSpace(id: string, name: string, publicSpace: boolean, dataset_cf_schema: any, dataset_cf_uischema: any): Promise<types.IAPIPayload> {
   return run('space', basePost, '', { id, name, public: publicSpace, dataset_cf_schema, dataset_cf_uischema });
 }
 
-export function patchSpace(id, name, dataset_cf_schema, dataset_cf_uischema, ftr) {
+export function patchSpace(id: string, name: string, dataset_cf_schema: any, dataset_cf_uischema: any, ftr: types.FTR): Promise<types.IAPIPayload> {
   return run('space', basePatch, id, { name, dataset_cf_schema, dataset_cf_uischema, ftr });
 }
 
 ///// dataset
 
-export function getDatasets(sid) {
+export function getDatasets(sid: string): Promise<types.IAPIPayload> {
   return run('dataset', baseGet, sid);
 }
 
-export function getDataset(sid, datasetId) {
+export function getDataset(sid: string, datasetId: string): Promise<types.IAPIPayload> {
   return run('dataset', baseGet, joinUri(sid, datasetId));
 }
 
-export function deleteDataset(sid, datasetId) {
+export function deleteDataset(sid: string, datasetId: string): Promise<types.IAPIPayload> {
   return run('dataset', baseDelete, joinUri(sid, datasetId));
 }
 
 //new API
-export function patchDatasetNew(sid, datasetId, content) {
+export function patchDatasetNew(sid: string, datasetId: string, content: any): Promise<types.IAPIPayload> {
   return run('dataset', basePatch, joinUri(sid, datasetId), content);
 }
 
-export function postDatasetNew(sid, content) {
+export function postDatasetNew(sid: string, content: any): Promise<types.IAPIPayload> {
   return run('dataset', basePost, sid, content);
 }
 
 //deprecated dataset API - use new API, see above
-export function postDataset(sid, name, description, tags, problem, resolution, custom) {
+export function postDataset(sid: string, name: string, description: string, tags: string, problem: string, resolution: string, custom: any): Promise<types.IAPIPayload> {
   return postDatasetNew(sid, { name, description, tags, problem, resolution, custom });
 }
 
 //deprecated dataset API - use new API, see above
-export function patchDataset(sid, datasetId, name, description, tags, problem, resolution, custom) {
+export function patchDataset(sid: string, datasetId: string, name: string, description: string, tags: Array<string>, problem: string, resolution: string, custom: any): Promise<types.IAPIPayload> {
   return patchDatasetNew(sid, datasetId, { name, description, tags, problem, resolution, custom });
 }
 
 
 ////// file
 
-export function patchFile(file, patchOptions) {
+export function patchFile(file: File, patchOptions: any): Promise<types.IAPIPayload> {
   const fid = file.id;
   return run('file', basePatch, joinUri(fid.space_id, fid.dataset_id, fid.item_id), patchOptions);
 }
 
-export function getFile(sid, datasetId, fileId) {
+export function getFile(sid: string, datasetId: string, fileId: string): Promise<types.IAPIPayload> {
   return run('file', baseGet, joinUri(sid, datasetId, fileId));
 }
 
-export function getFiles(sid, datasetId) {
+export function getFiles(sid: string, datasetId: string): Promise<types.IAPIPayload> {
   return run('file', baseGet, joinUri(sid, datasetId));
 }
 
-export function uploadFile(sid, datasetId, name, description, contentType, size, content) {
+export function uploadFile(sid: string, datasetId: string, name: string, description: string, contentType: string, size: number, content: any): Promise<types.IAPIPayload> {
   const options = putOptions({
     body: content,
   });
@@ -99,7 +100,7 @@ export function uploadFile(sid, datasetId, name, description, contentType, size,
   };
 
   if (description.length > 0) {
-    params.description = description;
+    params['description'] = description;
   }
 
   const query = Object.keys(params)
@@ -110,7 +111,7 @@ export function uploadFile(sid, datasetId, name, description, contentType, size,
 }
 
 
-export function getFileContent(sid, datasetId, fileId, options) {
+export function getFileContent(sid: string, datasetId: string, fileId: string, options?: any): Promise<any> {
   if (options === undefined) {
     options = {};
   }
@@ -126,6 +127,6 @@ export function getFileContent(sid, datasetId, fileId, options) {
     });
 }
 
-export function deleteFile(sid, datasetId, fileId) {
+export function deleteFile(sid: string, datasetId: string, fileId: string): Promise<types.IAPIPayload> {
   return run('file', baseDelete, joinUri(sid, datasetId, fileId));
 }

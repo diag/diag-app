@@ -1,14 +1,16 @@
-const crypto = require('crypto');
+// @ts-ignore
+import * as crypto from 'crypto'
 
 const base62chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 /* eslint no-restricted-syntax: off */
 // generates a random string in base62 [0-9a-zA-Z]
-exports.random = (length) => {
+export const random = (length: number): string => {
   const randomBytes = crypto.randomBytes(length);
   let result = '';
 
   let cursor = 0;
+  // @ts-ignore
   for (const c of randomBytes) {
     cursor += c;
     result += base62chars[cursor % 62];
@@ -17,7 +19,7 @@ exports.random = (length) => {
   return result;
 };
 
-exports.base62 = (integer, width) => {
+export const base62 = (integer: number, width: number): string => {
   let s = '';
   while (integer > 0) {
     s = base62chars[integer % 62] + s;
@@ -32,7 +34,7 @@ exports.base62 = (integer, width) => {
 };
 
 /* eslint no-mixed-operators: off */
-exports.base62decode = (s) => {
+export const base62decode = (s: string): number => {
   let r = 0;
 
   for (const c of s) {
@@ -52,12 +54,12 @@ exports.base62decode = (s) => {
 //  1 -> 11
 // 62 -> 210
 // 63 -> 211
-exports.lb62e = (integer) => {
+export const lb62e = (integer: number): string => {
   const s = this.base62(integer);
   if (s.length > 62) { throw Error(`Integer out of range for LB62 encoding, value=${integer}`); }
   return base62chars[s.length] + s;
 };
-exports.lb62d = (s) => {
+export const lb62d = (s: string): number => {
   if (s.length < 2 || this.base62decode(s[0]) !== s.length - 1) { throw Error(`Invalid LB62 encoded string, value=${s}`); }
   return this.base62decode(s.substr(1));
 };

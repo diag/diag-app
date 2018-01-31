@@ -2,9 +2,9 @@
   "compilerOptions": {
     "module": "commonjs",
     "moduleResolution": "node",
+    "rootDir": "./src/js",
     "outDir": "./dist",
     "inlineSources": true,
-    "allowJs": true,
     "target": "es5",
     "noImplicitAny": false,
     "noEmitOnError": true,
@@ -12,9 +12,10 @@
     "lib": [
       "es2015",
       "dom"
-    ]
+    ],
+    "declaration": true
   },
   "include": [
-    "../diag-app/src/**/*"
+    "src/js/**/*"
   ]
 }

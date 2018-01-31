@@ -1,13 +1,12 @@
 import { getAllSpaces } from '../api/datasets';
-import { updateHeaders, getSessionId, setApiHost, setApiBase, apiHost, apiUrl, apiBase } from '../utils/apiutils';
+import { updateHeaders, getSessionId, setApiHost, setApiBase, apiHost, apiUrl, apiBase } from '../utils';
 import Space from './space';
 import Dataset from './dataset';
 import File from './file';
 import Activity from './activity';
 import Annotation from './annotation';
 import User from './user';
-import APIPayload from '../api/types';
-import * as types from './types';
+import * as types from '../typings';
 
 let _store;
 let _dispatch;
@@ -279,20 +278,20 @@ export default class Spaces {
    * Returns users matching a given id
    * @param {string} id - ID to filter on
    */
-  users(id: types.id) : User[] { return User.storeListByClass(this, id); }
+  users(id: string) : User[] { return User.storeListByClass(this, id); }
 
   /**
    * Returns user matching a given id
    * @param {string} id - ID to filter on
    */
-  user(id: types.id) : User { return User.storeGetByClass(this, id); }
+  user(id: string) : User { return User.storeGetByClass(this, id); }
 
   /**
    * Load from API
-   * @param {Promise<APIPayload>} spacesPromise - Promise which returns a list of spaces
+   * @param {Promise<types.IAPIPayload>} spacesPromise - Promise which returns a list of spaces
    * @returns {Promise<Space[]>}
   */
-  static load(spacesPromise: Promise<APIPayload>) : Promise<Space[]> {
+  static load(spacesPromise: Promise<types.IAPIPayload>) : Promise<Space[]> {
     if (!spacesPromise) {
       spacesPromise = getAllSpaces();
     }

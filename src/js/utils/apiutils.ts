@@ -1,9 +1,11 @@
 import { Spaces } from '../app';
 import { baseGet } from './zero';
+import User from '../app/User';
+import * as types from '../typings';
 
 const USERS_CACHE = new Map();
 
-export function getUser(uid) {
+export function getUser(uid: string): Promise<types.IAPIPayload> {
   const cached = USERS_CACHE.get(uid);
   if (cached) {
     return cached;
@@ -18,7 +20,7 @@ export function clearCache() {
   USERS_CACHE.clear();
 }
 
-export function resolveUserId(payload, uidField, resultField) {
+export function resolveUserId(payload: types.IAPIPayload, uidField?: string, resultField?: string): Promise<types.IAPIPayload> {
   uidField = uidField || 'owner';
   resultField = resultField || 'owner_info';
   const uidMap = new Map();
@@ -53,6 +55,4 @@ export function resolveUserId(payload, uidField, resultField) {
     return Promise.resolve(payload);
   });
 }
-
-export * from './zero';
 

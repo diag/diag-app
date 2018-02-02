@@ -5,15 +5,21 @@ import Spaces from './spaces';
 import Dataset from './dataset';
 import File from './file';
 import Base from './base';
+import * as types from '../typings';
 
 /** Annotations on files */
-export default class Annotation extends Base {
+export default class Annotation extends Base implements types.IAnnotation {
+  id: types.id;
+  description: string;
+  offset: number;
+  length: number;
+  data: any;
+
   /**
    * Creates a annotation
-   * @param {File} parent - File object pointing to parent
    * @param {Object} annotation - Annotation object returned from API
    */
-  constructor(parent, annotation) {
+  constructor(annotation) {
     super(Spaces.store);
     Object.assign(this, annotation);
   }
@@ -26,7 +32,7 @@ export default class Annotation extends Base {
    * @param {number} length - Length of the annotation
    * @param {string} [data] - Data pointed to by the annotation
    */
-  static create(file, description, offset, length, data) {
+  static create(file: File, description: string, offset: number, length: number, data: any): Promise<Annotation> {
     if (file === undefined) {
       return Promise.reject('file undefined');
     }
@@ -44,7 +50,7 @@ export default class Annotation extends Base {
     }
     return postAnnotation(file.id.space_id, file.id.dataset_id, file.id.item_id, offset, length, description, data)
       .then(payload => (
-        checkEmpty(payload, () => new Promise(resolve => resolve(new Annotation(file, payload.items[0]))))
+        checkEmpty(payload, () => new Promise(resolve => resolve(new Annotation(payload.items[0]))))
       ));
   }
 
@@ -53,7 +59,7 @@ export default class Annotation extends Base {
    * @param {Dataset} dataset - Dataset to fetch annotations for
    * @returns {Promise<Annotation[]>}
    */
-  static load(dataset) {
+  static load(dataset: Dataset): Promise<Array<Annotation>> {
     if (dataset === undefined) {
       return Promise.reject('dataset undefined');
     }
@@ -62,14 +68,7 @@ export default class Annotation extends Base {
     }
     return getAllAnnotations(dataset.id.space_id, dataset.id.item_id)
       .then(payload => {
-        return payload.items.map(a => {
-          const f = dataset.file(a.id.file_id);
-          if (f === undefined) {
-            console.warn(`File id ${a.id.file_id} not in dataset id ${dataset.id.item_id}`);
-            return undefined;
-          }
-          return new Annotation(f, a);
-        }).filter(a => a !== undefined);
+        return payload.items.map(a => new Annotation(a)).filter(a => a !== undefined);
       });
   }
 
@@ -77,14 +76,14 @@ export default class Annotation extends Base {
    * Updates an annotation in the API
    * @returns {Promise<Annotation>}
    */
-  update() {
+  update(): Promise<Annotation> {
     if (this.description === undefined) {
       return Promise.reject('description undefined');
     }
     return patchAnnotation(this.id.space_id, this.id.dataset_id, this.id.file_id, this.id.item_id, this.description)
       .then((payload) => {
         if (payload.count > 0) {
-          const ret = this.copy();
+          const ret = this.copy() as Annotation;
           Object.assign(ret, payload.items[0]);
           return Promise.resolve(ret);
         }
@@ -96,7 +95,7 @@ export default class Annotation extends Base {
    * Deletes an annotation in the API
    * @returns {Promise<Annotation>}
    */
-  delete() {
+  delete(): Promise<Annotation> {
     return deleteAnnotation(this.id.space_id, this.id.dataset_id, this.id.file_id, this.id.item_id)
       .then(() => {
         return Promise.resolve(this);
@@ -106,7 +105,7 @@ export default class Annotation extends Base {
   /**
    * Adds a comment in the API
    */
-  createComment(text) {
+  createComment(text: string): Promise<Annotation> {
     if (text === undefined || text.length === 0) {
       return Promise.reject('text must be defined');
     }
@@ -119,7 +118,7 @@ export default class Annotation extends Base {
   /**
    * Adds a comment in the API
    */
-  updateComment(id, text) {
+  updateComment(id: string, text: string): Promise<Annotation> {
     if (id === undefined || id.length === 0) {
       return Promise.reject('id must be defined');
     }
@@ -135,7 +134,7 @@ export default class Annotation extends Base {
   /**
    * Deletes a comment in the API
    */
-  deleteComment(id) {
+  deleteComment(id: string): Promise<Annotation> {
     if (id === undefined || id.length === 0) {
       return Promise.reject('id must be defined');
     }

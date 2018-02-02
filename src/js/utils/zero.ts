@@ -1,13 +1,15 @@
+import * as types from '../typings';
+
 // NO! YOU CAN'T IMPORT SHIT !
 
-let _apiHost = 'https://app.diag.ai';
-let _apiBase = '/api/v1';
+let _apiHost: string = 'https://app.diag.ai';
+let _apiBase: string = '/api/v1';
 
-export function setApiHost(url) {
+export function setApiHost(url: string) {
   _apiHost = url;
 }
 
-export function setApiBase(base) {
+export function setApiBase(base: string) {
   _apiBase = base;
 }
 
@@ -15,7 +17,7 @@ export function setApiBase(base) {
  * Retrieives the API URL
  * @returns {string}
  */
-export function apiUrl() {
+export function apiUrl(): string {
   return `${_apiHost}${_apiBase}`;
 }
 
@@ -23,7 +25,7 @@ export function apiUrl() {
  * Retrieves the API Host - defaults to https://app.diag.ai/
  * @returns {string}
  */
-export function apiHost() {
+export function apiHost(): string {
   return _apiHost;
 }
 
@@ -31,16 +33,17 @@ export function apiHost() {
  * Retrieives the API base, e.g. '/api/v1'
  * @returns {string}
  */
-export function apiBase() {
+export function apiBase(): string {
   return _apiBase;
 }
 
 
-export function joinUri() {
-  return Array.from(arguments).map(a => encodeURIComponent(a)).join('/');
+export function joinUri(...args: Array<string>): string {
+  // @ts-ignore
+  return args.map(a => encodeURIComponent(a)).join('/');
 }
 
-function randomTextNoDeps(len) {
+function randomTextNoDeps(len: number): string {
   let text = '';
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -50,36 +53,36 @@ function randomTextNoDeps(len) {
   return text;
 }
 
-const _sessionId = randomTextNoDeps(8);
+const _sessionId: string = randomTextNoDeps(8);
 
-export function getSessionId() {
+export function getSessionId(): string {
   return _sessionId;
 }
 
-let _headers = {
+let _headers: any = {
   Accept: 'application/json',
   'Content-Type': 'application/json'
 };
 
-const HEADER_REQ_ID = 'X-Request-Id';
-function getRequestId(){
+const HEADER_REQ_ID: string = 'X-Request-Id';
+function getRequestId(): string {
   return `${_sessionId}-${randomTextNoDeps(8)}`;
 }
 
 
-export function headers() {
+export function headers(): any {
   return { ..._headers,
     [HEADER_REQ_ID]: getRequestId() };
 }
 
-export function getOptions(extra) {
+export function getOptions(extra: any): any {
   return Object.assign({
     headers: headers(),
     credentials: 'same-origin',
   }, extra);
 }
 
-export function putOptions(extra) {
+export function putOptions(extra: any): any {
   const h = { ...headers(), 'Content-Type': 'application/octet-stream' };
   return Object.assign({
     headers: h,
@@ -89,21 +92,21 @@ export function putOptions(extra) {
 }
 
 
-export function parseJSON(response) {
+export function parseJSON(response: any): Promise<any> {
   if (response.ok) {
     return response.json();
   }
   return Promise.reject(response);
 }
 
-export function getText(response) {
+export function getText(response: any): Promise<any> {
   if (response.ok) {
     return response.text();
   }
   return Promise.reject(response);
 }
 
-export function updateHeaders(newHeaders) {
+export function updateHeaders(newHeaders: any) {
   _headers = { ..._headers, ...newHeaders };
   Object.keys(_headers).forEach((key) => {
     if (undefined === _headers[key]) {
@@ -112,7 +115,7 @@ export function updateHeaders(newHeaders) {
   });
 }
 
-export function checkMore(payload, url, options, items) {
+export function checkMore(payload: types.IAPIPayload, url: string, options: any, items: any): Promise<any> {
   if (typeof payload !== 'object') {
     return Promise.resolve(payload);
   }
@@ -140,6 +143,7 @@ export function checkMore(payload, url, options, items) {
       parser = document.createElement('a');
       parser.href = url;
     } else {
+      // @ts-ignore
       const { URL } = require('url');
       parser = new URL(url);
     }
@@ -160,7 +164,7 @@ export function checkMore(payload, url, options, items) {
   return Promise.resolve(items);
 }
 
-export function apiFetch(url, options, items) {
+export function apiFetch(url: string, options: any, items: any): Promise<types.IAPIPayload> {
   options = options || {};
   if(!(options.headers || {})[HEADER_REQ_ID]) {
     options.headers = options.headers || {};
@@ -171,21 +175,21 @@ export function apiFetch(url, options, items) {
     .then((payload) => (checkMore(payload, url, options, items)));
 }
 
-export function baseGet(url) {
+export function baseGet(url: string): Promise<types.IAPIPayload> {
   const options = getOptions({
     method: 'GET',
   });
   return apiFetch(url, options, {});
 }
 
-export function baseDelete(url) {
+export function baseDelete(url: string): Promise<types.IAPIPayload> {
   const options = getOptions({
     method: 'DELETE',
   });
   return apiFetch(url, options, {});
 }
 
-export function basePost(url, body) {
+export function basePost(url: string, body: any): Promise<types.IAPIPayload> {
   const options = getOptions({
     method: 'POST',
     body: JSON.stringify(body),
@@ -193,7 +197,7 @@ export function basePost(url, body) {
   return apiFetch(url, options, {});
 }
 
-export function basePatch(url, body) {
+export function basePatch(url: string, body: any): Promise<types.IAPIPayload> {
   const options = getOptions({
     method: 'PATCH',
     body: JSON.stringify(body),

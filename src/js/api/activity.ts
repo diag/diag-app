@@ -1,7 +1,8 @@
 import { Spaces } from '../app';
-import { baseGet, basePost, resolveUserId } from '../utils/apiutils';
+import * as types from '../typings';
+import { baseGet, basePost, resolveUserId } from '../utils';
 
-function processResponse(p) {
+function processResponse(p: Promise<any>): Promise<any> {
   return p.then(resolveUserId)
     .then(payload => {
       payload.items.forEach(a => { a.id.type = 'activity'; });
@@ -9,7 +10,7 @@ function processResponse(p) {
     });
 }
 
-function run(funct, url, args) {
+function run(funct: Function, url: string, args?: any) {
   return processResponse(funct(`${Spaces.apiUrl()}/activity/${url}`, args));
 }
 
@@ -19,7 +20,7 @@ function run(funct, url, args) {
  * @param {string} sid - Space ID
  * @returns {Promise}
  */
-export function getSpaceActivity(sid) {
+export function getSpaceActivity(sid: string): Promise<types.IAPIPayload> {
   return run(baseGet, sid);
 }
 
@@ -30,7 +31,7 @@ export function getSpaceActivity(sid) {
  * @param {object} data - Full data of the activity. Should contain at minimum the ID object of what the activity references.
  * @returns {Promise}
  */
-export function postSpaceActivity(sid, type, data) {
+export function postSpaceActivity(sid: string, type: types.ActivityType, data: any): Promise<types.IAPIPayload> {
   return run(basePost, sid, { type, data });
 }
 
@@ -40,7 +41,7 @@ export function postSpaceActivity(sid, type, data) {
  * @param {string} datasetId - Dataset ID
  * @returns {Promise}
  */
-export function getDatasetActivity(sid, datasetId) {
+export function getDatasetActivity(sid: string, datasetId: string): Promise<types.IAPIPayload> {
   return run(baseGet, `${sid}/${datasetId}`);
 }
 
@@ -52,7 +53,7 @@ export function getDatasetActivity(sid, datasetId) {
  * @param {object} data - Full data of the activity. Should contain at minimum the ID object of what the activity references.
  * @returns {Promise}
  */
-export function postDatasetActivity(sid, datasetId, type, data) {
+export function postDatasetActivity(sid: string, datasetId: string, type: types.ActivityType, data: any): Promise<types.IAPIPayload> {
   return run(basePost, `${sid}/${datasetId}`, { type, data });
 }
 
@@ -63,7 +64,7 @@ export function postDatasetActivity(sid, datasetId, type, data) {
  * @param {string} fileId - File ID
  * @returns {Promise}
  */
-export function getFileActivity(sid, datasetId, fileId) {
+export function getFileActivity(sid: string, datasetId: string, fileId: string): Promise<types.IAPIPayload> {
   return run(baseGet, `${sid}/${datasetId}/${fileId}`);
 }
 
@@ -76,6 +77,6 @@ export function getFileActivity(sid, datasetId, fileId) {
  * @param {Object} data - Full data of the activity. Should contain at minimum the ID object of what the activity references.
  * @returns {Promise}
  */
-export function postFileActivity(sid, datasetId, fileId, type, data) {
+export function postFileActivity(sid: string, datasetId: string, fileId: string, type: types.ActivityType, data: any) {
   return run(basePost, `${sid}/${datasetId}/${fileId}`, { type, data });
 }

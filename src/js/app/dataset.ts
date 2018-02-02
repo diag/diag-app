@@ -3,9 +3,17 @@ import { AssetId } from '../utils';
 import Spaces from './spaces';
 import Space from './space';
 import Base from './base';
+import * as types from '../typings';
 
 /** Dataset containing files and activity */
-export default class Dataset extends Base {
+export default class Dataset extends Base implements types.IDataset {
+  id: types.id;
+  description: string;
+  tags: Array<string>;
+  problem: string;
+  resolution: string;
+  custom: any;
+
   /**
    * Create a dataset
    * @param {Object} dataset - Dataset returned from the backend
@@ -19,17 +27,19 @@ export default class Dataset extends Base {
    * Returns URL for this file
    * @returns {string}
    */
-  url() { return Dataset.url(this.id); }
+  url(): string { return Dataset.url(this.id); }
 
 
-  static _newDataset(payload) {
+  static _newDataset(payload: types.IAPIPayload): Promise<Dataset> {
     if (payload.count > 0) {
       return Promise.resolve(new Dataset(payload.items[0]));
     }
     return Promise.reject('Empty result set');
   }
 
-  static _id(datasetOrId) {
+  static _id(datasetOrId: Dataset): types.id | Error;
+  static _id(datasetOrId: string): types.id | Error;
+  static _id(datasetOrId): types.id | Error {
     if (datasetOrId === undefined) {
       return new Error('datasetOrId undefined');
     }
@@ -38,7 +48,7 @@ export default class Dataset extends Base {
       if (!(datasetOrId instanceof Dataset) && (id.valid && !id.valid())) {
         return new Error('datasetOrId is not a valid Dataset object or valid AssetId');
       }
-      return id;
+      return id as types.id;
     }
     return datasetOrId.id;
   }
@@ -48,7 +58,7 @@ export default class Dataset extends Base {
    * Returns URL for the dataset given a dataset id
    * @returns {string}
    */
-  static url(did) { return did === undefined || did.space_id === undefined || did.item_id === undefined ? undefined : `/dataset/${did.space_id}/${did.item_id}`; }
+  static url(did: types.id): string { return did === undefined || did.space_id === undefined || did.item_id === undefined ? undefined : `/dataset/${did.space_id}/${did.item_id}`; }
 
   /**
    * Fetches a dataset from the API by id
@@ -56,7 +66,7 @@ export default class Dataset extends Base {
    * @param {(string)} datasetId - ID of the dataset to retrieve from the API (optional)
    * @returns {Promise<dataset>}
    */
-  static load(spaceId, datasetId) {
+  static load(spaceId: string, datasetId: string): Promise<Dataset> {
     let dsPromise;
     if (datasetId === undefined) {
       dsPromise = getDatasets(spaceId);
@@ -80,7 +90,7 @@ export default class Dataset extends Base {
    * @param {object} [custom] - set of custom fields (optional)
    * @returns {Promise<Dataset>}
    */
-  static create(space, name, description, tags, problem, resolution, custom) {
+  static create(space: Space | types.id, name: string, description: string, tags: string, problem: string, resolution: string, custom: string): Promise<Dataset> {
     let id;
     if (space === undefined) {
       return Promise.reject('space undefined');
@@ -106,7 +116,7 @@ export default class Dataset extends Base {
    * Updates dataset with the API
    * @returns {Promise<Dataset>}
    */
-  update() {
+  update(): Promise<Dataset> {
     // update dataset itself
     return patchDataset(this.id.space_id, this.id.item_id, this.name, this.description, this.tags, this.problem, this.resolution, this.custom)
       .then(Dataset._newDataset);
@@ -117,6 +127,8 @@ export default class Dataset extends Base {
    * @param {(Dataset|string)} datasetOrId - Dataset or AssetId representing a dataset
    * @returns {Promise<Dataset>}
    */
+  static delete(datasetOrId: Dataset);
+  static delete(datasetOrId: string);
   static delete(datasetOrId) {
     const id = Dataset._id(datasetOrId);
     if (id instanceof Error) {
@@ -126,6 +138,8 @@ export default class Dataset extends Base {
       .then(Dataset._newDataset);
   }
 
+  static patch(datasetOrId: Dataset, fields2change: any);
+  static patch(datasetOrId: string, fields2change: any);
   static patch(datasetOrId, fields2change) {
     const id = Dataset._id(datasetOrId);
     if (id instanceof Error) {
@@ -139,7 +153,7 @@ export default class Dataset extends Base {
    * Deletes this dataset with the api
    * @returns {Promise<Dataset>}
    */
-  delete() {
+  delete(): Promise<Dataset> {
     return Dataset.delete(this);
   }
 }

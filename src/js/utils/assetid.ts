@@ -1,6 +1,6 @@
 
 
-const SHORT_TYPE = {
+const SHORT_TYPE: Object = {
   s: { type: 'space', parts: ['item_id'] },
   d: { type: 'dataset', parts: ['space_id', 'item_id'] },
   f: { type: 'file', parts: ['space_id', 'dataset_id', 'item_id'] },
@@ -9,9 +9,9 @@ const SHORT_TYPE = {
   z: { type: 'activity', parts: ['space_id', 'dataset_id', 'item_id'] }, // dataset activity
 };
 
-const SEP = '/';
+const SEP: string = '/';
 
-function sameElements(a, b) {
+function sameElements(a: any, b: any): boolean {
   if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
     return false;
   }
@@ -26,6 +26,10 @@ function sameElements(a, b) {
 }
 
 export default class AssetId {
+  _valid: boolean;
+  _t: string;
+  _type: string;
+  type: string;
   constructor(id) {
     this._valid = false;
     if (typeof (id) === 'string') {
@@ -59,11 +63,11 @@ export default class AssetId {
     Object.freeze(this); // can't be changed after c'tor
   }
 
-  valid() {
+  valid(): boolean {
     return this._valid;
   }
 
-  _toString(firstSeg) {
+  _toString(firstSeg): string {
     if (!this.valid()) {
       return 'invalid';
     }
@@ -74,7 +78,7 @@ export default class AssetId {
     return parts.join(SEP);
   }
 
-  toString() {
+  toString(): string {
     return this._toString(this._t);
   }
 }

@@ -226,7 +226,6 @@ describe('Redux Files', () => {
           expect(actions).toHaveLength(1);
           expect(actions[0].type).toBe(DIAG_CREATE);
           expect(actions[0].payload).toBeInstanceOf(File);
-          expect(actions[0].payload.content()).toBe(td.f1orig.content);
           td.fileCreateAction = actions[0];
           td.file = td.fileCreateAction.payload;
           return actions[0].payload.content();

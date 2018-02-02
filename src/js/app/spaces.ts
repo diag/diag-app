@@ -1,11 +1,12 @@
 import { getAllSpaces } from '../api/datasets';
-import { updateHeaders, getSessionId, setApiHost, setApiBase, apiHost, apiUrl, apiBase } from '../utils/apiutils';
+import { updateHeaders, getSessionId, setApiHost, setApiBase, apiHost, apiUrl, apiBase } from '../utils';
 import Space from './space';
 import Dataset from './dataset';
 import File from './file';
 import Activity from './activity';
 import Annotation from './annotation';
 import User from './user';
+import * as types from '../typings';
 
 let _store;
 let _dispatch;
@@ -33,6 +34,9 @@ const ACTIONS = {
 
 /** Top level class representing all spaces we have access to */
 export default class Spaces {
+  _currentSpaceId: string;
+  _currentDatasetId: string;
+  version: number;
   /**
    * Creates Spaces, our holding object for state
    */
@@ -47,7 +51,7 @@ export default class Spaces {
    * @param {function} dispatch - Redux dispatch function
    * @param {function} getStore - Redux getStore function
    */
-  static init(dispatch, getStore) {
+  static init(dispatch: Function, getStore: Function) {
     _dispatch = dispatch;
     _store = () => getStore().spaces;
     _initialized = true;
@@ -57,7 +61,7 @@ export default class Spaces {
    * Sets API URL
    * @param {string} url - API Host, defaults to https://app.diag.ai
    */
-  static setApiHost(url) {
+  static setApiHost(url: string) {
     setApiHost(url);
   }
 
@@ -65,7 +69,7 @@ export default class Spaces {
    * Sets API Base
    * @param {string} base - API url base, defaults to /api/v1
    */
-  static setApiBase(base) {
+  static setApiBase(base: string) {
     setApiBase(base);
   }
 
@@ -73,7 +77,7 @@ export default class Spaces {
    * Sets API Authorization token
    * @param {string} token - API Token to authenticate with
    */
-  static setApiToken(token) {
+  static setApiToken(token: string) {
     let bOrD = 'Bearer';
     if (token.match(/^\d+\.\w{12}$/)) {
       bOrD = 'Diag';
@@ -85,7 +89,7 @@ export default class Spaces {
    * Retrieives the API URL
    * @returns {string}
    */
-  static apiUrl() {
+  static apiUrl() : string {
     return apiUrl();
   }
 
@@ -93,7 +97,7 @@ export default class Spaces {
    * Retrieves the API Host - defaults to https://app.diag.ai/
    * @returns {string}
    */
-  static apiHost() {
+  static apiHost() : string {
     return apiHost();
   }
 
@@ -101,21 +105,21 @@ export default class Spaces {
    * Retrieives the API base, e.g. '/api/v1'
    * @returns {string}
    */
-  static apiBase() {
+  static apiBase() : string {
     return apiBase();
   }
 
   /**
    * Returns callbacks for setting and getting file raw data
    */
-  static getFileContentProvider() {
+  static getFileContentProvider() : types.IContentProvider {
     return _contentProvider;
   }
 
   /**
    * Sets callbacks for setting and getting file raw data
    */
-  static setFileContentProvider(cp) {
+  static setFileContentProvider(cp: types.IContentProvider) {
     _contentProvider = { ..._contentProvider, ...cp };
   }
 
@@ -123,9 +127,9 @@ export default class Spaces {
    * Returns our current store
    * @returns {object}
    */
-  static store() {
+  static store() : Spaces {
     if (!_store) {
-      return {};
+      return new Spaces();
     }
     return _store();
   }
@@ -134,7 +138,7 @@ export default class Spaces {
    * Returns whether we've initialized the Spaces store
    * @returns {bool}
    */
-  static initialized() { return _initialized; }
+  static initialized() : boolean { return _initialized; }
 
   /**
    * Returns a randomly generated sessionId
@@ -146,7 +150,7 @@ export default class Spaces {
    * Returns a copy of Spaces
    * @returns {Spaces}
    */
-  copy() {
+  copy() : Spaces {
     const ret = new Spaces();
     ret._currentSpaceId = this._currentSpaceId;
     ret._currentDatasetId = this._currentDatasetId;
@@ -157,14 +161,14 @@ export default class Spaces {
    * All spaces
    * @returns {Space[]}
    */
-  spaces() { return Space.storeListByClass(this, {}); }
+  spaces() : any { return Space.storeListByClass(this, {}); }
 
   /**
    * Space to return
    * @param {string} sid - Space to return
    * @returns {Space}
    * */
-  space(sid) {
+  space(sid: string) : Space {
     const id = { item_id: sid };
     let ret = Space.storeGetByClass(this, id);
     if (!ret) {
@@ -179,11 +183,11 @@ export default class Spaces {
    * @param {string} did - Dataset ID
    * @returns {Dataset}
    */
-  dataset(sid, did) {
+  dataset(sid: string, did: string) : Dataset {
     const id = { space_id: sid, item_id: did };
     let ret = Dataset.storeGetByClass(this, id);
     if (!ret) {
-      ret = new Dataset();
+      ret = new Dataset(undefined);
     }
     return ret;
   }
@@ -193,7 +197,7 @@ export default class Spaces {
    * @param {string} sid - Space ID
    * @returns {Dataset[]}
    */
-  datasets(sid) {
+  datasets(sid: string) : Dataset[] {
     let id;
     if (sid) {
       id = { space_id: sid };
@@ -207,11 +211,11 @@ export default class Spaces {
    * @param {string} did - Dataset ID
    * @param {string} fid - File ID
    */
-  file(sid, did, fid) {
+  file(sid: string, did: string, fid: string) {
     const id = { space_id: sid, dataset_id: did, item_id: fid };
     let ret = File.storeGetByClass(this, id);
     if (!ret) {
-      ret = new File();
+      ret = new File(undefined);
     }
     return ret;
   }
@@ -221,7 +225,7 @@ export default class Spaces {
    * @param {object} id - ID to filter files
    * @returns {File[]}
    */
-  files(id) {
+  files(id: types.id) : File[] {
     return File.storeListByClass(this, id);
   }
 
@@ -230,62 +234,64 @@ export default class Spaces {
    * @param {string} owner - Owner
    * @returns {Space[]}
    */
-  spacesForUser(owner) { return (this.spaces().filter(s => s.owner === owner) || []); }
+  spacesForUser(owner: string) : Space[] { return (this.spaces().filter(s => s.owner === owner) || []); }
 
   /**
    * Returns current space
-   * @returns {Spaces}
+   * @returns {Space}
    */
-  currentSpace() { return this._currentSpaceId === undefined ? new Space() : this.space(this._currentSpaceId); }
+  currentSpace() : Space { return this._currentSpaceId === undefined ? new Space() : this.space(this._currentSpaceId); }
 
   /**
    * Returns current dataset
    * @returns {Dataset}
    */
-  currentDataset() { return (this._currentSpaceId === undefined || this._currentDatasetId === undefined) ? new Dataset() : this.dataset(this._currentSpaceId, this._currentDatasetId); }
+  currentDataset() : Dataset { return (this._currentSpaceId === undefined || this._currentDatasetId === undefined) ? new Dataset(undefined) : this.dataset(this._currentSpaceId, this._currentDatasetId); }
 
   /**
    * Returns current space ID
    * @returns {string}
    */
-  currentSpaceId() { return this._currentSpaceId; }
+  currentSpaceId() : string { return this._currentSpaceId; }
 
   /**
    * Returns current dataset ID
    * @returns {string}
    */
-  currentDatasetId() { return this._currentDatasetId; }
+  currentDatasetId() : string { return this._currentDatasetId; }
 
   /**
    * Returns activity for id
    * @param {object} id - ID object to filter on
+   * @returns {Activity[]}
    */
-  activity(id) { return Activity.storeListByClass(this, id); }
+  activity(id: types.id) : Activity[] { return Activity.storeListByClass(this, id); }
 
   /**
    * Returns annotations for id
    * @param {object} id - ID object to filter on
+   * @returns {Annotation[]}
    */
-  annotations(id) { return Annotation.storeListByClass(this, id); }
+  annotations(id: types.id) : Annotation[] { return Annotation.storeListByClass(this, id); }
 
   /**
    * Returns users matching a given id
    * @param {string} id - ID to filter on
    */
-  users(id) { return User.storeListByClass(this, id); }
+  users(id: string) : User[] { return User.storeListByClass(this, id); }
 
   /**
    * Returns user matching a given id
    * @param {string} id - ID to filter on
    */
-  user(id) { return User.storeGetByClass(this, id); }
+  user(id: string) : User { return User.storeGetByClass(this, id); }
 
   /**
    * Load from API
-   * @param {Promise<Space>} spacesPromise - Promise which returns a list of spaces
-   * @returns {Promise<Spaces>}
+   * @param {Promise<types.IAPIPayload>} spacesPromise - Promise which returns a list of spaces
+   * @returns {Promise<Space[]>}
   */
-  static load(spacesPromise) {
+  static load(spacesPromise: Promise<types.IAPIPayload>) : Promise<Space[]> {
     if (!spacesPromise) {
       spacesPromise = getAllSpaces();
     }
@@ -298,7 +304,7 @@ export default class Spaces {
    * @param {Promise<object>} promise - Unresolved promise with a payload to dispatch
    * @returns {Promise<object} - Returns promise payload as an unresolved promise
    */
-  static dispatchCreate(promise) {
+  static dispatchCreate(promise: Promise<Object>) : Promise<Object> {
     return Spaces.dispatch('DIAG_CREATE', promise);
   }
 
@@ -307,7 +313,7 @@ export default class Spaces {
    * @param {Promise<object>} promise - Unresolved promise with a payload to dispatch
    * @returns {Promise<object} - Returns promise payload as an unresolved promise
    */
-  static dispatchLoad(promise) {
+  static dispatchLoad(promise: Promise<Object>) : Promise<Object> {
     return Spaces.dispatch('DIAG_LOAD', promise);
   }
 
@@ -316,7 +322,7 @@ export default class Spaces {
    * @param {Promise<object>} promise - Unresolved promise with a payload to dispatch
    * @returns {Promise<object} - Returns promise payload as an unresolved promise
    */
-  static dispatchUpdate(promise) {
+  static dispatchUpdate(promise: Promise<Object>) : Promise<Object> {
     return Spaces.dispatch('DIAG_UPDATE', promise);
   }
 
@@ -325,7 +331,7 @@ export default class Spaces {
    * @param {Promise<object>} promise - Unresolved promise with a payload to dispatch
    * @returns {Promise<object} - Returns promise payload as an unresolved promise
    */
-  static dispatchDelete(promise) {
+  static dispatchDelete(promise: Promise<Object>) : Promise<Object> {
     return Spaces.dispatch('DIAG_DELETE', promise);
   }
 
@@ -335,7 +341,7 @@ export default class Spaces {
    * @param {Promise<object>} promise - Unresolved promise with a payload to dispatch
    * @returns {Promise<object} - Returns promise payload as an unresolved promise
    */
-  static dispatch(action, promise) {
+  static dispatch(action: string, promise: Promise<Object>) : Promise<Object> {
     if (action !== 'DIAG_CREATE' && action !== 'DIAG_UPDATE' && action !== 'DIAG_DELETE' && action !== 'DIAG_LOAD') {
       return Promise.reject('invalid action, must be one of DIAG_CREATE, DIAG_UPDATE, DIAG_DELETE, or DIAG_LOAD');
     }
@@ -352,14 +358,14 @@ export default class Spaces {
    * @param {object} action - Action to execute to mutate state
    * @returns {object} - Returns mutated state
    */
-  static reduce(state = new Spaces(), action) {
+  static reduce(state: any = new Spaces(), action: any) {
     if (!action || !(action.payload || action.error)) return state;
 
     const actMethod = ACTIONS[action.type];
     if (actMethod === undefined) return state;
 
     let ret;
-    if (state.constuctor) {
+    if (state.constructor) {
       ret = Object.create(state.constructor.prototype);
     } else {
       ret = Object.create(state);

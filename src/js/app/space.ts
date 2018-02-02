@@ -2,11 +2,20 @@ import {
   getSpace, postSpace, patchSpace,
 } from '../api/datasets';
 import Spaces from './spaces';
+import Dataset from './dataset';
 import Base from './base';
+import * as types from '../typings'
 
 /** Space containing datasets and activity */
-export default class Space extends Base {
-  constructor(space) {
+export default class Space extends Base implements types.ISpace {
+  id: types.id;
+  name: string;
+  publicSpace?: boolean;
+  dataset_cf_schema?: any;
+  dataset_cf_uischema?: any;
+  ftr: types.FTR;
+
+  constructor(space?) {
     super(Spaces.store);
     Object.assign(this, space, { _store: Spaces.store });
   }
@@ -15,20 +24,20 @@ export default class Space extends Base {
    * Returns URL for this space
    * @returns {string}
    */
-  url() { return Space.url(this.id); }
+  url(): string { return Space.url(this.id); }
 
   /**
    * Returns URL for the space given a space id
    * @returns {string}
    */
-  static url(sid) { return sid === undefined || sid.item_id === undefined ? undefined : `/space/${sid.item_id}`; }
+  static url(sid: types.id): string { return sid === undefined || sid.item_id === undefined ? undefined : `/space/${sid.item_id}`; }
 
   /**
    * Fetches a space from the API by id
    * @param {string} spaceId - ID of the space to retrieve from the API
    * @returns {Promise<dataset>}
    */
-  static load(spaceId) {
+  static load(spaceId: string): Promise<Array<Space>> {
     if (!spaceId) {
       return Promise.reject('spaceId undefined');
     }
@@ -45,6 +54,7 @@ export default class Space extends Base {
    * @param {(object)} dataset_cf_uischema - Custom Fields UI JSON Schema
    * @returns {Promise<Space>}
    */
+  static create(id: types.id, name: string, publicSpace?: boolean, dataset_cf_schema?: any, dataset_cf_uischema?: any): Promise<Space>;
   static create(id, name, publicSpace = false, dataset_cf_schema = undefined, dataset_cf_uischema = undefined) {
     if (id === undefined) {
       return Promise.reject('id undefined');
@@ -61,10 +71,10 @@ export default class Space extends Base {
    * Update space in the API
    * @returns {Promise<Space>}
    */
-  update() {
+  update(): Promise<Space> {
     return patchSpace(this.id.item_id, this.name, this.dataset_cf_schema, this.dataset_cf_uischema, this.ftr)
       .then((payload) => {
-        const ret = this.copy();
+        const ret = this.copy() as Space;
         if (payload.count > 0) {
           Object.assign(ret, payload.items[0]);
         }

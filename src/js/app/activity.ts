@@ -6,9 +6,13 @@ import Space from './space';
 import Dataset from './dataset';
 import File from './file';
 import Base from './base';
+import * as types from '../typings';
 
 /** User activity */
-export default class Activity extends Base {
+export default class Activity extends Base implements types.IActivity {
+  id: types.id;
+  type: types.ActivityType;
+  data: any;
   /**
    * Create activity
    * @param {Object} activity - Activity object from API
@@ -24,12 +28,14 @@ export default class Activity extends Base {
    * @param {string} type - Type, search|upload|annotation for now
    * @param {Object} data - Full data of the activity. Should contain at minimum the ID object of what the activity references.
    */
-  static create(parent, type, data) {
+  static create(parent: string, type: types.ActivityType, data: any): Promise<Activity>;
+  static create(parent: Space | Dataset | File, type: types.ActivityType, data: any): Promise<Activity>;
+  static create(parent, type, data): Promise<Activity> {
     let id;
     if (parent === undefined) {
       return Promise.reject('parent undefined');
     }
-    if (!(parent instanceof Space || parent instanceof Dataset || parent instanceof File)) {
+    if (!((parent as any) instanceof Space || (parent as any) instanceof Dataset || (parent as any) instanceof File)) {
       id = new AssetId(parent);
       if (!id.valid() && !(parent instanceof Space || parent instanceof Dataset || parent instanceof File)) {
         return Promise.reject('parent is not a Space, Dataset, File or valid AssetId');
@@ -74,14 +80,14 @@ export default class Activity extends Base {
    * @param {(Space|Dataset|string)} parent - Space, Dataset or AssetId to load activity for
    * @returns Promise<Activity>
    */
-  static load(parent) {
+  static load(parent: Space | Dataset | string): Promise<Array<Activity>> {
     let id;
     if (parent === undefined) {
       return Promise.reject('parent undefined');
     }
     if (!(parent instanceof Space || parent instanceof Dataset)) {
       id = new AssetId(parent);
-      if (!id.valid() && !(parent instanceof Space || parent instanceof Dataset)) {
+      if (!id.valid() && !((parent as any) instanceof Space || (parent as any) instanceof Dataset)) {
         return Promise.reject('parent is not a Space, Dataset or valid AssetId');
       }
     } else {

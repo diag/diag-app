@@ -25,13 +25,25 @@
  *
  *
  */
+export interface jswsCallback {
+  ({ type: string, data: any }): void;
+}
+
 export default class JsonWebSocket {
+  conn: WebSocket;
+  defaultType: string;
+  callbacks: { [key: string]: jswsCallback[]}
+  readyState: number;
+  keepAliveInt: NodeJS.Timer;
+
+
   /**
    * @param {WebSocket} ws - the WebSocket to wrap, do NOT use the raw websocket from this point on
    * @param {String} defaultType - the default event type - this is such that a JsonWebSocket can be used as a drop in replacement for
    * a WebSocket - if the default send() and addEventListener('messge' ...) are used, then the default event type will be used
    * @param {Number} keepAliveSec - send keep alive messages every this many seconds, set to 0 to disable keep alive messages
    */
+  constructor(ws: WebSocket, defaultType: string, keepAliveSec?: number);
   constructor(ws, defaultType, keepAliveSec = 30) {
     this.conn = ws;
     this.defaultType = defaultType;

@@ -15,7 +15,7 @@ export default abstract class BaseImpl extends Base {
         return Promise.reject('_newObj not implemented');
     }
     
-    static get(aid: AssetId) : Promise<Array<BaseImpl>> {
+    static load(aid: AssetId) : Promise<Array<BaseImpl>> {
         return getObjects(this._type, aid.parts())
               .then(this._fromApi); 
     }

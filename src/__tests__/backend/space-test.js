@@ -177,7 +177,7 @@ describe('App Spaces', () => {
 
     it('should get a bot directly', () => {
       const bid = AssetId.create('bot', [td.botId.space_id, td.botId.item_id]);
-      return Bot.get(bid)
+      return Bot.load(bid)
         .then((b) => {
           b = b[0];
           expect(b.id.space_id).toBe(td.spaceId);

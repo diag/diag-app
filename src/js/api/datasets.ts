@@ -130,3 +130,21 @@ export function getFileContent(sid: string, datasetId: string, fileId: string, o
 export function deleteFile(sid: string, datasetId: string, fileId: string): Promise<types.IAPIPayload> {
   return run('file', baseDelete, joinUri(sid, datasetId, fileId));
 }
+
+///// generic CRUD operations
+
+export function getObjects(type: string, uriParts: Array<string>): Promise<types.IAPIPayload> {
+  return run(type, baseGet, joinUri(...uriParts));
+}
+
+export function deleteObject(type: string, uriParts: Array<string>): Promise<types.IAPIPayload> {
+  return run(type, baseDelete, joinUri(...uriParts));
+}
+
+export function patchObject(type: string, uriParts: Array<string>, content: any): Promise<types.IAPIPayload> {
+  return run(type, basePatch, joinUri(...uriParts), content);
+}
+
+export function postObject(type: string, uriParts: Array<string>, content: any): Promise<types.IAPIPayload> {
+  return run(type, basePost, joinUri(...uriParts), content);
+}

@@ -3,6 +3,7 @@
 const SHORT_TYPE: Object = {
   s: { type: 'space', parts: ['item_id'] },
   d: { type: 'dataset', parts: ['space_id', 'item_id'] },
+  b: { type: 'bot', parts: ['space_id', 'item_id'] },
   f: { type: 'file', parts: ['space_id', 'dataset_id', 'item_id'] },
   a: { type: 'annotation', parts: ['space_id', 'dataset_id', 'file_id', 'item_id'] },
   y: { type: 'activity', parts: ['space_id', 'dataset_id', 'file_id', 'item_id'] }, // file activity
@@ -76,6 +77,17 @@ export default class AssetId {
       parts.push(this[p]);
     }, this);
     return parts.join(SEP);
+  }
+
+  parts() : Array<string> {
+    if (!this.valid()) {
+      return [];
+    }
+    const parts = [];
+    SHORT_TYPE[this._t].parts.forEach(p => {
+      parts.push(this[p]);
+    }, this);
+    return parts;
   }
 
   toString(): string {

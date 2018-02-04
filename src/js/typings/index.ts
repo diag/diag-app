@@ -106,3 +106,12 @@ export interface ISpace {
   dataset_cf_uischema?: any;
   ftr: FTR;
 }
+
+export interface IBot {
+  id: id;
+  name: string;
+  description: string;
+  search: string;
+  severity: number;
+  tags: Array<string>;
+}

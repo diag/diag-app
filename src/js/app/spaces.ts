@@ -2,6 +2,7 @@ import { getAllSpaces } from '../api/datasets';
 import { updateHeaders, getSessionId, setApiHost, setApiBase, apiHost, apiUrl, apiBase } from '../utils';
 import Space from './space';
 import Dataset from './dataset';
+import Bot from './bot';
 import File from './file';
 import Activity from './activity';
 import Annotation from './annotation';
@@ -205,6 +206,19 @@ export default class Spaces {
     return Dataset.storeListByClass(this, id);
   }
 
+  /**
+   * Bots to return
+   * @param {string} sid - Space ID
+   * @returns {Bot[]}
+   */
+  bots(sid: string) : Bot[] {
+    let id;
+    if (sid) {
+      id = { space_id: sid };
+    }
+    return Bot.storeListByClass(this, id);
+  }
+  
   /**
    * File to return
    * @param {string} sid - Space ID

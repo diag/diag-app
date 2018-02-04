@@ -25,7 +25,7 @@ export default class Bot extends BaseImpl implements types.IBot {
   }
 
   static _type : string = 'bot';
-  static _newObj(payload: types.IAPIPayload): Promise<Bot[]> {
+  static _fromApi(payload: types.IAPIPayload): Promise<Bot[]> {
     if (payload.count > 0) {
         return Promise.resolve(payload.items.map(i => new Bot(i)));
     }

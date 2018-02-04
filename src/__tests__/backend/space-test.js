@@ -132,8 +132,7 @@ describe('App Spaces', () => {
     // bot stuff 
 
     it('should not have any bots', () => {
-      const s = td.spaces.space(td.spaceId);
-      const bots = s.bots();
+      const bots = td.space().bots();
       expect(bots).toHaveLength(0);
     });
 
@@ -154,6 +153,7 @@ describe('App Spaces', () => {
           expect(b.search).toBe('alexa OR google');
           td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_CREATE', payload: b });
           td.space = () => td.spaces.space(td.spaceId);
+          td.botId = b.id;
         }).catch(td.catchErr)
     })
 
@@ -162,6 +162,48 @@ describe('App Spaces', () => {
       expect(bots).toHaveLength(1);
     });
 
+    it('should update a bot', () => {
+      const bid = new AssetId(td.botId);
+      return Bot.update(bid, {name: 'new diag', search: 'siri OR alexa OR google'})
+        .then((b) => {
+          b = b[0];
+          expect(b.id.space_id).toBe(td.spaceId);
+          expect(b.name).toBe('new diag');
+          expect(b.search).toBe('siri OR alexa OR google');
+          td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_UPDATE', payload: b });
+          td.space = () => td.spaces.space(td.spaceId);
+        }).catch(td.catchErr)
+    });
+
+    it('should get a bot directly', () => {
+      const bid = AssetId.create('bot', [td.botId.space_id, td.botId.item_id]);
+      return Bot.get(bid)
+        .then((b) => {
+          b = b[0];
+          expect(b.id.space_id).toBe(td.spaceId);
+          expect(b.name).toBe('new diag');
+          expect(b.search).toBe('siri OR alexa OR google');
+        }).catch(td.catchErr)
+    });
+
+    it('should delete a bot', () => {
+      const bid = new AssetId(td.botId);
+      return Bot.delete(bid)
+        .then((b) => {
+          b = b[0];
+          expect(b.id.space_id).toBe(td.spaceId);
+          expect(b.name).toBe('new diag');
+          expect(b.search).toBe('siri OR alexa OR google');
+          td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_DELETE', payload: b });
+          td.space = () => td.spaces.space(td.spaceId);
+        }).catch(td.catchErr)
+    });
+
+    it('should not have any bots (deleted)', () => {
+      const bots = td.space().bots();
+      expect(bots).toHaveLength(0);
+    });
+    
   });
 });
 

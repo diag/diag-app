@@ -93,4 +93,26 @@ export default class AssetId {
   toString(): string {
     return this._toString(this._t);
   }
+
+  /**
+   * Create an Asset id from type and id parts 
+   * @param type - the (long) type of object
+   * @param parts - the parts that make up the id
+   */
+  static create(type: string, parts: string[]): AssetId{
+    const shortType = Object.keys(SHORT_TYPE).find(k => {
+      const tmp = SHORT_TYPE[k];
+      if(tmp.type !== type) {
+        return false;
+      }
+      if(tmp.parts.length !== (parts||[]).length){
+        return false;
+      } 
+      return true;
+    });
+    if(shortType) {
+      return new AssetId([shortType, ...parts].join(SEP));
+    }
+    return new AssetId(''); // invalid
+  }
 }

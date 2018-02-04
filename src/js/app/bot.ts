@@ -29,6 +29,6 @@ export default class Bot extends BaseImpl implements types.IBot {
     if (payload.count > 0) {
         return Promise.resolve(payload.items.map(i => new Bot(i)));
     }
-    return Promise.reject('Empty result set');
+    return Promise.resolve([]);
   }
 }

@@ -1,7 +1,8 @@
 import * as tu from '../../js/utils/testutils';
-import { Spaces, Space } from '../../js/app';
+import { Spaces, Space, Bot } from '../../js/app';
 import fetch from 'node-fetch';
 import { polyfill as promisePolyfill } from 'es6-promise';
+import { AssetId } from '../../js/utils';
 
 // Redux
 import configureMockStore from 'redux-mock-store';
@@ -127,6 +128,82 @@ describe('App Spaces', () => {
       expect(props.created_at).toBeDefined();
       expect(props._parent).not.toBeDefined();
     });
+
+    // bot stuff 
+
+    it('should not have any bots', () => {
+      const bots = td.space().bots();
+      expect(bots).toHaveLength(0);
+    });
+
+    it('should fail to create a bot', () => {
+      const s = td.spaces.space(td.spaceId);
+      const sid = new AssetId(s.id);
+      return expect(Bot.create(sid, {})).rejects.toBeDefined();
+    })
+
+    it('should succeed to create a bot', () => {
+      const s = td.spaces.space(td.spaceId);
+      const sid = new AssetId(s.id);
+      return Bot.create(sid, {name: 'diag', search: 'alexa OR google'})
+        .then((b) => {
+          b = b[0];
+          expect(b.id.space_id).toBe(td.spaceId);
+          expect(b.name).toBe('diag');
+          expect(b.search).toBe('alexa OR google');
+          td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_CREATE', payload: b });
+          td.space = () => td.spaces.space(td.spaceId);
+          td.botId = b.id;
+        }).catch(td.catchErr)
+    })
+
+    it('should have one bot (created)', () => {
+      const bots = td.space().bots();
+      expect(bots).toHaveLength(1);
+    });
+
+    it('should update a bot', () => {
+      const bid = new AssetId(td.botId);
+      return Bot.update(bid, {name: 'new diag', search: 'siri OR alexa OR google'})
+        .then((b) => {
+          b = b[0];
+          expect(b.id.space_id).toBe(td.spaceId);
+          expect(b.name).toBe('new diag');
+          expect(b.search).toBe('siri OR alexa OR google');
+          td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_UPDATE', payload: b });
+          td.space = () => td.spaces.space(td.spaceId);
+        }).catch(td.catchErr)
+    });
+
+    it('should get a bot directly', () => {
+      const bid = AssetId.bot(td.botId.space_id, td.botId.item_id);
+      return Bot.load(bid)
+        .then((b) => {
+          b = b[0];
+          expect(b.id.space_id).toBe(td.spaceId);
+          expect(b.name).toBe('new diag');
+          expect(b.search).toBe('siri OR alexa OR google');
+        }).catch(td.catchErr)
+    });
+
+    it('should delete a bot', () => {
+      const bid = new AssetId(td.botId);
+      return Bot.delete(bid)
+        .then((b) => {
+          b = b[0];
+          expect(b.id.space_id).toBe(td.spaceId);
+          expect(b.name).toBe('new diag');
+          expect(b.search).toBe('siri OR alexa OR google');
+          td.spaces = Spaces.reduce(td.spaces, { type: 'DIAG_DELETE', payload: b });
+          td.space = () => td.spaces.space(td.spaceId);
+        }).catch(td.catchErr)
+    });
+
+    it('should not have any bots (deleted)', () => {
+      const bots = td.space().bots();
+      expect(bots).toHaveLength(0);
+    });
+    
   });
 });
 

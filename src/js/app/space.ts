@@ -5,6 +5,7 @@ import Spaces from './spaces';
 import Dataset from './dataset';
 import Base from './base';
 import * as types from '../typings'
+import Bot from './bot';
 
 /** Space containing datasets and activity */
 export default class Space extends Base implements types.ISpace {
@@ -25,6 +26,16 @@ export default class Space extends Base implements types.ISpace {
    * @returns {string}
    */
   url(): string { return Space.url(this.id); }
+
+  /**
+   * Returns any bots associated with this space
+   */
+  bots() : Bot[] {
+    if (typeof this._store().bots !== 'function') {
+      return [];
+    }
+    return this._store().bots(this.id.item_id);
+  }
 
   /**
    * Returns URL for the space given a space id

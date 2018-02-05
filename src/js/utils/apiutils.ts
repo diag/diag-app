@@ -1,6 +1,5 @@
 import { Spaces } from '../app';
 import { baseGet } from './zero';
-import User from '../app/User';
 import * as types from '../typings';
 
 const USERS_CACHE = new Map();

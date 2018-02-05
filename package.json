@@ -43,7 +43,7 @@
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-jsx-a11y": "^5.1.1",
     "eslint-plugin-react": "^7.1.0",
-    "gdi-http": "git+ssh://git@github.com/taktakhq/gdi-http.git",
+    "gdi-http": "git+ssh://git@github.com/diag/gdi-http.git#ed8b90eededddb9001e481c32e4228758fde017b",
     "jest-cli": "^20.0.4",
     "node-fetch": "^2.0.0-alpha.9",
     "redux-mock-store": "^1.3.0",

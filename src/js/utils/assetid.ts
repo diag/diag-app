@@ -1,10 +1,11 @@
 
 
 const SHORT_TYPE: Object = {
-  s: { type: 'space', parts: ['item_id'] },
+  a: { type: 'annotation', parts: ['space_id', 'dataset_id', 'file_id', 'item_id'] },
+  b: { type: 'bot', parts: ['space_id', 'item_id'] },
   d: { type: 'dataset', parts: ['space_id', 'item_id'] },
   f: { type: 'file', parts: ['space_id', 'dataset_id', 'item_id'] },
-  a: { type: 'annotation', parts: ['space_id', 'dataset_id', 'file_id', 'item_id'] },
+  s: { type: 'space', parts: ['item_id'] },
   y: { type: 'activity', parts: ['space_id', 'dataset_id', 'file_id', 'item_id'] }, // file activity
   z: { type: 'activity', parts: ['space_id', 'dataset_id', 'item_id'] }, // dataset activity
 };
@@ -78,7 +79,56 @@ export default class AssetId {
     return parts.join(SEP);
   }
 
+  parts() : Array<string> {
+    if (!this.valid()) {
+      return [];
+    }
+    const parts = [];
+    SHORT_TYPE[this._t].parts.forEach(p => {
+      parts.push(this[p]);
+    }, this);
+    return parts;
+  }
+
   toString(): string {
     return this._toString(this._t);
+  }
+
+  /**
+   * Create an Asset id from type and id parts 
+   * @param type - the (long) type of object
+   * @param parts - the parts that make up the id
+   */
+  static create(type: string, parts: string[]): AssetId{
+    const shortType = Object.keys(SHORT_TYPE).find(k => {
+      const tmp = SHORT_TYPE[k];
+      if(tmp.type !== type) {
+        return false;
+      }
+      if(tmp.parts.length !== (parts||[]).length){
+        return false;
+      } 
+      return true;
+    });
+    if(shortType) {
+      return new AssetId([shortType, ...parts].join(SEP));
+    }
+    return new AssetId(''); // invalid
+  }
+
+  static space(id:string) {
+    return this.create('space', Array.from(arguments));
+  }
+  static dataset(sid:string, did:string) {
+    return this.create('dataset', Array.from(arguments));
+  }
+  static bot(sid:string, bid:string) {
+    return this.create('bot', Array.from(arguments));
+  }
+  static file(sid:string, did:string, fid:string) {
+    return this.create('file', Array.from(arguments));
+  }
+  static annotation(sid:string, did:string, fid:string, aid:string) {
+    return this.create('annotation', Array.from(arguments));
   }
 }

@@ -281,7 +281,7 @@ export default abstract class Base {
     objs.forEach(o => {
       const itemIdx = list.findIndex(s => isEqual(o.id, s.id));
       if (itemIdx > -1) {
-        list[itemIdx] = o.copy();
+        list[itemIdx] = Object.assign(list[itemIdx].copy(), o);
       }
     });
     ret[key] = list;

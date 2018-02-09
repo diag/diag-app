@@ -176,6 +176,9 @@ export default class File extends Base implements types.IFile {
       id = fileOrId.id;
       filePromise = Promise.resolve(fileOrId);
     }
+    if (!id) {
+      return Promise.reject('File id undefined');
+    }
     return filePromise
       .then((payload) => {
         ret = payload;
@@ -233,6 +236,9 @@ export default class File extends Base implements types.IFile {
       }
     } else {
       id = dataset.id;
+    }
+    if (!id) {
+      return Promise.reject('id undefined');
     }
     if (name === undefined) {
       return Promise.reject('name undefined');
@@ -309,6 +315,9 @@ export default class File extends Base implements types.IFile {
       }
     } else {
       id = dataset.id;
+    }
+    if (!id) {
+      return Promise.reject('id undefined');
     }
     return getFiles(id.space_id, id.item_id)
       .then(payload => payload.items.map(f => new File(f)));

@@ -3,7 +3,7 @@ import { Spaces, Space, Dataset, File, Annotation } from '../../js/app';
 import fetch from 'node-fetch';
 import { polyfill as promisePolyfill } from 'es6-promise';
 
-const isEqual = require('lodash/fp/isEqual');
+const isEqual = require('lodash.isequal');
 
 // Redux
 import configureMockStore from 'redux-mock-store';

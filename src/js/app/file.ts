@@ -49,24 +49,28 @@ export default class File extends Base implements types.IFile {
    * Gets the raw content of a file
    * @returns {Promise<ArrayBuffer>}
    */
+  //@ts-ignore
   rawContent(...args) : Promise<ArrayBuffer> { return Spaces.getFileContentProvider().rawContent(this, ...args); }
 
   /**
    * Gets the size of the raw content
    * @returns {number}
    */
+  //@ts-ignore
   rawContentSize(...args) : number { return Spaces.getFileContentProvider().rawContentSize(this, ...args); }
 
   /**
    * Returns whether this file has raw content
    * @returns {boolean}
    */
+  // @ts-ignore
   hasRawContent(...args) : boolean { return Spaces.getFileContentProvider().hasRawContent(this, ...args); }
 
   /**
    * Clears raw content from the cache. Not guaranteed to clear content, cache may ignore.
    * Should be used to ensure we don't sent content in memory to the main thread.
    */
+  // @ts-ignore
   clearRawContent(...args) { return Spaces.getFileContentProvider().clearRawContent(this, ...args); }
 
 

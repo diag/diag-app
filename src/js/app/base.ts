@@ -1,5 +1,5 @@
 import { props } from '../utils/apputils';
-import * as isEqual from 'lodash/fp/isEqual';
+import * as isEqual from 'lodash.isequal';
 import * as types from '../typings';
 
 export default abstract class Base {

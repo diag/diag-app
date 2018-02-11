@@ -9,3 +9,4 @@ coverage
 TODO
 build
 github_deploy_key.enc
+tsconfig.json

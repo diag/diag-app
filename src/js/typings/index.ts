@@ -71,6 +71,7 @@ export interface IAnnotation {
   offset: number;
   length: number;
   data: any;
+  extra: any;
 }
 
 export interface IActivity {

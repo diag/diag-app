@@ -14,6 +14,7 @@ export default class Annotation extends Base implements types.IAnnotation {
   offset: number;
   length: number;
   data: any;
+  extra: any;
 
   /**
    * Creates a annotation
@@ -80,7 +81,7 @@ export default class Annotation extends Base implements types.IAnnotation {
     if (this.description === undefined) {
       return Promise.reject('description undefined');
     }
-    return patchAnnotation(this.id.space_id, this.id.dataset_id, this.id.file_id, this.id.item_id, this.description)
+    return patchAnnotation(this.id.space_id, this.id.dataset_id, this.id.file_id, this.id.item_id, this.description, this.extra)
       .then((payload) => {
         if (payload.count > 0) {
           const ret = this.copy() as Annotation;

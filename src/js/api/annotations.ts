@@ -46,8 +46,8 @@ export function deleteAnnotation(sid: string, datasetId: string, fileId: string,
   return run(baseDelete, `${sid}/${datasetId}/${fileId}/${annoId}`);
 }
 
-export function postAnnotation(sid: string, datasetId: string, fileId: string, offset: number, length: number, description: string, data: any): Promise<types.IAPIPayload> {
-  const options = { offset, length, description, data };
+export function postAnnotation(sid: string, datasetId: string, fileId: string, offset: number, length: number, description: string, data: any, extra: any): Promise<types.IAPIPayload> {
+  const options = { offset, length, description, data, extra };
   return run(basePost, `${sid}/${datasetId}/${fileId}`, options);
 }
 

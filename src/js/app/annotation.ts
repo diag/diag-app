@@ -14,6 +14,7 @@ export default class Annotation extends Base implements types.IAnnotation {
   offset: number;
   length: number;
   data: any;
+  extra: any;
 
   /**
    * Creates a annotation
@@ -32,7 +33,7 @@ export default class Annotation extends Base implements types.IAnnotation {
    * @param {number} length - Length of the annotation
    * @param {string} [data] - Data pointed to by the annotation
    */
-  static create(file: File, description: string, offset: number, length: number, data: any): Promise<Annotation> {
+  static create(file: File, description: string, offset: number, length: number, data: any, extra?: any): Promise<Annotation> {
     if (file === undefined) {
       return Promise.reject('file undefined');
     }
@@ -48,7 +49,7 @@ export default class Annotation extends Base implements types.IAnnotation {
     if (length === undefined) {
       return Promise.reject('length undefined');
     }
-    return postAnnotation(file.id.space_id, file.id.dataset_id, file.id.item_id, offset, length, description, data)
+    return postAnnotation(file.id.space_id, file.id.dataset_id, file.id.item_id, offset, length, description, data, extra)
       .then(payload => (
         checkEmpty(payload, () => new Promise(resolve => resolve(new Annotation(payload.items[0]))))
       ));
@@ -80,7 +81,7 @@ export default class Annotation extends Base implements types.IAnnotation {
     if (this.description === undefined) {
       return Promise.reject('description undefined');
     }
-    return patchAnnotation(this.id.space_id, this.id.dataset_id, this.id.file_id, this.id.item_id, this.description)
+    return patchAnnotation(this.id.space_id, this.id.dataset_id, this.id.file_id, this.id.item_id, this.description, this.extra)
       .then((payload) => {
         if (payload.count > 0) {
           const ret = this.copy() as Annotation;

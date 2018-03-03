@@ -38,16 +38,16 @@ export function getAllAnnotations(sid: string, datasetId: string): Promise<types
   return run(baseGet, `${sid}/${datasetId}`);
 }
 
-export function patchAnnotation(sid: string, datasetId: string, fileId: string, annoId: string, description:string): Promise<types.IAPIPayload> {
-  return run(basePatch, `${sid}/${datasetId}/${fileId}/${annoId}`, { description });
+export function patchAnnotation(sid: string, datasetId: string, fileId: string, annoId: string, description:string, extra: any): Promise<types.IAPIPayload> {
+  return run(basePatch, `${sid}/${datasetId}/${fileId}/${annoId}`, { description, extra });
 }
 
 export function deleteAnnotation(sid: string, datasetId: string, fileId: string, annoId: string) {
   return run(baseDelete, `${sid}/${datasetId}/${fileId}/${annoId}`);
 }
 
-export function postAnnotation(sid: string, datasetId: string, fileId: string, offset: number, length: number, description: string, data: any): Promise<types.IAPIPayload> {
-  const options = { offset, length, description, data };
+export function postAnnotation(sid: string, datasetId: string, fileId: string, offset: number, length: number, description: string, data: any, extra: any): Promise<types.IAPIPayload> {
+  const options = { offset, length, description, data, extra };
   return run(basePost, `${sid}/${datasetId}/${fileId}`, options);
 }
 

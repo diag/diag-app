@@ -39,7 +39,9 @@ export function resolveUserId(payload: types.IAPIPayload, uidField?: string, res
       if (r.count > 0) {
         uidMap.set(r.items[0].id, {
           display_name: r.items[0].display_name,
-          photos: r.items[0].photos || []
+          photos: r.items[0].photos || [],
+          profile: r.items[0].profile || {},
+          created_at: r.items[0].created_at || 0,
         });
       }
     });

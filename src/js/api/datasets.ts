@@ -32,12 +32,18 @@ export function getAllSpaces(): Promise<types.IAPIPayload> {
 
 /* eslint camelcase: off */
 export function postSpace(id: string, name: string, publicSpace: boolean, dataset_cf_schema: any, dataset_cf_uischema: any): Promise<types.IAPIPayload> {
-  return run('space', basePost, '', { id, name, public: publicSpace, dataset_cf_schema, dataset_cf_uischema });
+  return run('space', basePost, '', { id, name, public: publicSpace?1:0, dataset_cf_schema, dataset_cf_uischema });
 }
 
 export function patchSpace(id: string, name: string, dataset_cf_schema: any, dataset_cf_uischema: any, ftr: types.FTR): Promise<types.IAPIPayload> {
   return run('space', basePatch, id, { name, dataset_cf_schema, dataset_cf_uischema, ftr });
 }
+
+//new API
+export function patchSpaceNew(sid: string, content: any): Promise<types.IAPIPayload> {
+  return run('space', basePatch, joinUri(sid), content);
+}
+
 
 ///// dataset
 

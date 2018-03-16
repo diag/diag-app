@@ -102,7 +102,7 @@ export interface IFile {
 export interface ISpace {
   id: id;
   name: string;
-  publicSpace?: boolean;
+  public?: number;
   dataset_cf_schema?: any;
   dataset_cf_uischema?: any;
   ftr: FTR;

@@ -1,5 +1,5 @@
 import {
-  getSpace, postSpace, patchSpace,
+  getSpace, postSpace, patchSpace, patchSpaceNew,
 } from '../api/datasets';
 import Spaces from './spaces';
 import Dataset from './dataset';
@@ -11,7 +11,7 @@ import Bot from './bot';
 export default class Space extends Base implements types.ISpace {
   id: types.id;
   name: string;
-  publicSpace?: boolean;
+  public?: number;
   dataset_cf_schema?: any;
   dataset_cf_uischema?: any;
   ftr: types.FTR;
@@ -60,7 +60,7 @@ export default class Space extends Base implements types.ISpace {
    * Saves space to the API
    * @param {string} id - Space ID to create
    * @param {string} name - Space name
-   * @param {(boolean)} publicSpace - Public space
+   * @param {(boolean)} public - Public space
    * @param {(object)} dataset_cf_schema - Custom Fields JSON Schema
    * @param {(object)} dataset_cf_uischema - Custom Fields UI JSON Schema
    * @returns {Promise<Space>}
@@ -71,12 +71,7 @@ export default class Space extends Base implements types.ISpace {
       return Promise.reject('id undefined');
     }
     return postSpace(id, name, publicSpace, dataset_cf_schema, dataset_cf_uischema)
-      .then((payload) => {
-        if (payload.count > 0) {
-          return Promise.resolve(new Space(payload.items[0]));
-        }
-        return Promise.reject('Empty result set');
-      });
+      .then(Space._newSpace);
   }
   /**
    * Update space in the API
@@ -91,5 +86,18 @@ export default class Space extends Base implements types.ISpace {
         }
         return Promise.resolve(ret);
       });
+  }
+
+  static _newSpace(payload: types.IAPIPayload): Promise<Space> {
+    if (payload.count > 0) {
+      return Promise.resolve(new Space(payload.items[0]));
+    }
+    return Promise.reject('Empty result set');
+  }
+
+  /// new API
+  static patch(id: types.id, fields2change: any) : Promise<Space>{
+    return patchSpaceNew(id.item_id, fields2change)
+      .then(Space._newSpace);
   }
 }

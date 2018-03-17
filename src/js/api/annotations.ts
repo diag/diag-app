@@ -62,3 +62,7 @@ export function patchAnnotationComment(sid: string, datasetId: string, fileId: s
 export function deleteAnnotationComment(sid: string, datasetId: string, fileId: string, annotationId: string, commentId: string): Promise<types.IAPIPayload> {
   return run(baseDelete, `${sid}/${datasetId}/${fileId}/${annotationId}/comments/${commentId}`);
 }
+
+export function resolveAnnotationUserId(p: Promise<any>): Promise<types.IAPIPayload>{
+  return processResponse(p);
+}

@@ -5,6 +5,7 @@ const SHORT_TYPE: Object = {
   b: { type: 'bot', parts: ['space_id', 'item_id'] },
   d: { type: 'dataset', parts: ['space_id', 'item_id'] },
   f: { type: 'file', parts: ['space_id', 'dataset_id', 'item_id'] },
+  o: { type: 'board', parts: ['space_id', 'dataset_id', 'item_id'] },
   s: { type: 'space', parts: ['item_id'] },
   y: { type: 'activity', parts: ['space_id', 'dataset_id', 'file_id', 'item_id'] }, // file activity
   z: { type: 'activity', parts: ['space_id', 'dataset_id', 'item_id'] }, // dataset activity

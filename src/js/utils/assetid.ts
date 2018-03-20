@@ -132,4 +132,7 @@ export default class AssetId {
   static annotation(sid:string, did:string, fid:string, aid:string) {
     return this.create('annotation', Array.from(arguments));
   }
+  static board(sid:string, did:string, bid:string) {
+    return this.create('board', Array.from(arguments));
+  }
 }

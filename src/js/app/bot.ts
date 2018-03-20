@@ -6,7 +6,6 @@ import * as types from '../typings';
 import { IBot } from '../typings';
 import BaseImpl from './baseimpl';
 
-/** Dataset containing files and activity */
 export default class Bot extends BaseImpl implements types.IBot {
     id: types.id;
     name: string;
@@ -14,6 +13,7 @@ export default class Bot extends BaseImpl implements types.IBot {
     search: string;
     severity: number;
     tags: Array<string>;
+    script: string;
   
   /**
    * Create a bot

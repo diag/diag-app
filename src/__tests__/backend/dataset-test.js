@@ -7,6 +7,8 @@ import { polyfill as promisePolyfill } from 'es6-promise';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { DIAG_CREATE, DIAG_LOAD, DIAG_UPDATE } from '../../js/actions';
+import AssetId from '../../js/utils/assetid';
+import Board from '../../js/app/board';
 
 global.fetch = fetch;
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 15000;
@@ -349,6 +351,16 @@ describe('Redux Datasets', () => {
           td.dataset = td.datasetLoadAction.payload;
         })
     ));
+
+    /*
+    // dataset boards stuff
+    it('should not have any boards', () => {
+      const ds = Array.isArray(td.dataset) ? td.dataset[0] : td.dataset;
+      return Spaces.dispatchLoad(Board.load(AssetId.board(ds.id.space_id, ds.id.item_id, '')))
+        .then(x => console.log(x));
+      // expect(boards).toHaveLength(0);
+    });
+    */
   });
 });
 

@@ -3,6 +3,7 @@ import { updateHeaders, getSessionId, setApiHost, setApiBase, apiHost, apiUrl, a
 import Space from './space';
 import Dataset from './dataset';
 import Bot from './bot';
+import Board from './board';
 import File from './file';
 import Activity from './activity';
 import Annotation from './annotation';
@@ -206,6 +207,7 @@ export default class Spaces {
     return Dataset.storeListByClass(this, id);
   }
 
+
   /**
    * Bots to return
    * @param {string} sid - Space ID
@@ -288,6 +290,13 @@ export default class Spaces {
    */
   annotations(id: types.id) : Annotation[] { return Annotation.storeListByClass(this, id); }
 
+  /**
+   * Get a list of boards available in the dataset
+   * @param {object} id - ID object to filter on
+   * @returns {Board[]}
+   */
+  boards(id: types.id) : Board[] { return Board.storeListByClass(this, id); }
+  
   /**
    * Returns users matching a given id
    * @param {string} id - ID to filter on

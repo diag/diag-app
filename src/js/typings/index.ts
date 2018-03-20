@@ -115,4 +115,14 @@ export interface IBot {
   search: string;
   severity: number;
   tags: Array<string>;
+  script: string;
+}
+
+export interface IBoard {
+  id: id;
+  name: string;
+  description: string;
+  tags: Array<string>;
+  assets: Array<string>;
+  view: any;
 }
